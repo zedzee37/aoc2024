@@ -16,7 +16,7 @@ end
 function parseNum(line::String, start::Int)
     current = start
 
-    while (current <= lastindex(line) && isdigit(line[current]))
+    while current <= lastindex(line) && isdigit(line[current])
         current += 1
     end
 
@@ -27,7 +27,7 @@ end
 function consumeNonDigits(line::String, start::Int)
     current = start
 
-    while (!isdigit(line[current]))
+    while !isdigit(line[current])
         current += 1
     end
 
@@ -44,3 +44,23 @@ for line in readlines("input.txt")
     push!(list1, num1)
     push!(list2, num2)
 end
+
+count = Dict()
+
+for num in list2
+    if !haskey(count, num)
+        count[num] = 0
+    end
+    count[num] += 1
+end
+
+sum = 0
+for num in list1
+    if !haskey(count, num)
+        continue
+    end
+    
+    global sum += num * count[num]
+end
+
+println(string(sum))
