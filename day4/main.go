@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -13,4 +14,7 @@ func check(e error) {
 func main() {
 	data, err := os.ReadFile("input.txt")
 	check(err)
+
+	text := string(data)
+	fmt.Println(text)
 }
