@@ -1,15 +1,14 @@
 import std/tables
 import std/re
-from std/sequtils import map
 import std/strutils
 import std/sets
+import std/strformat
+import std/sequtils
 
-let mappingExpr = re"(\d+)\|(\d+)"
-
-proc readMappings(contents: string): Table[int, seq[int]] =
+func readMappings(contents: string): Table[int, seq[int]] =
     result = initTable[int, seq[int]]()
     
-    let mappings = findAll(contents, mappingExpr)
+    let mappings = findAll(contents, re"(\d+)\|(\d+)")
 
     for mapping in mappings:
         let split = mapping.split(re"\|").map(parseInt)
@@ -21,20 +20,16 @@ proc readMappings(contents: string): Table[int, seq[int]] =
             result[n1] = @[]
         
         result[n1].add(n2)
-        
 
-let orderExpr = re"(\d+,)+\d+"
-
-proc readOrder(contents: string): seq[seq[int]] =
+func readOrder(contents: string): seq[seq[int]] =
     result = @[]
-    let order = findAll(contents, orderExpr)
+    let order = findAll(contents, re"(\d+,)+\d+")
 
     for line in order:
         let split = line.split(re",").map(parseInt)
         result.add(split)
 
-
-proc checkOrder(mappings: Table[int, seq[int]], order: seq[int]): bool =
+func checkOrder(mappings: Table[int, seq[int]], order: seq[int]): bool =
     var seen = toHashSet[int]([])
 
     for num in order:
@@ -49,20 +44,25 @@ proc checkOrder(mappings: Table[int, seq[int]], order: seq[int]): bool =
     
     return true
 
-
-proc part1(contents: string) =
-    let mappings = readMappings(contents)
-    let order = readOrder(contents)
-
-    var sum = 0
-    for line in order:
-        if checkOrder(mappings, line):
-            let middleIndex = int(len(line) / 2)
-            sum += line[middleIndex]
-
-    echo sum
-
-
+func fixOrder(mappings: Table[int, seq[int]], order: seq[int]): seq[int] =
+    result = @[]
+    
 let contents = readFile("input.txt")
-part1(contents)
-        
+
+let mappings = readMappings(contents)
+let order = readOrder(contents)
+
+var partOneSum = 0
+var partTwoSum = 0
+for line in order:
+    let middleIndex = int(len(line) / 2)
+
+    if checkOrder(mappings, line):
+        partOneSum += line[middleIndex]
+    else:
+        let fixed = fixOrder(mappings, line)
+        partTwoSum += fixed[middleIndex]
+
+
+echo fmt"The solution to part 1 is: {partOneSum}"
+echo fmt"The solution to part 2 is: {partTwoSum}"
