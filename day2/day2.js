@@ -42,7 +42,7 @@ function getAllPermutations(row) {
 fs.readFile("input.txt", "utf-8", (err, text) => {
     if (err) {
         console.error("Error reading file:", err);
-        return;
+        return
     }
 
     let lines = text.split("\n");
