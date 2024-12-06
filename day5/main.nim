@@ -4,6 +4,7 @@ import std/strutils
 import std/sets
 import std/strformat
 import std/sequtils
+import std/enumerate
 
 func readMappings(contents: string): Table[int, seq[int]] =
     result = initTable[int, seq[int]]()
@@ -44,8 +45,36 @@ func checkOrder(mappings: Table[int, seq[int]], order: seq[int]): bool =
     
     return true
 
-func fixOrder(mappings: Table[int, seq[int]], order: seq[int]): seq[int] =
-    result = @[]
+proc fixOrder(mappings: Table[int, seq[int]], order: seq[int]): seq[int] =
+    result = order
+
+    var hasConflict = true
+    while hasConflict:
+        hasConflict = false
+        var seen = toHashSet[int]([])
+        var newRes = result
+
+        for i, num in enumerate(result):
+            seen.incl(num)
+
+            if not mappings.hasKey(num):
+                continue
+
+            let after = mappings[num]
+
+            for val in after:
+                if val in seen:
+                    let idx = newRes.find(val)  # Find the current index of val
+
+                    if idx >= 0 and idx < len(result):
+                        newRes[i] = val
+                        newRes[idx] = num
+
+                        hasConflict = true
+                        break
+        
+        result = newRes
+
     
 let contents = readFile("input.txt")
 
