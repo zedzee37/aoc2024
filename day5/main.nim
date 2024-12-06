@@ -14,13 +14,16 @@ proc readMappings(contents: string): Table[int, seq[int]] =
     for mapping in mappings:
         let split = mapping.split(re"\|").map(parseInt)
 
-        if not result.hasKey(split[1]):
-            result[split[1]] = @[]
+        var n1 = split[0]
+        var n2 = split[1]
+
+        if not result.hasKey(n1):
+            result[n1] = @[]
         
-        result[split[1]].add(split[0])
+        result[n1].add(n2)
         
 
-let orderExpr = re"(\d+,*)+"
+let orderExpr = re"(\d+,)+\d+"
 
 proc readOrder(contents: string): seq[seq[int]] =
     result = @[]
@@ -32,32 +35,34 @@ proc readOrder(contents: string): seq[seq[int]] =
 
 
 proc checkOrder(mappings: Table[int, seq[int]], order: seq[int]): bool =
-    var failNums = toHashSet[int]([])
     var seen = toHashSet[int]([])
 
     for num in order:
-        if num in failNums:
-            return false
-            
-        if mappings.hasKey(num):
-            let before = toHashSet(mappings[num])
+        seen.incl(num)
 
-            echo failNums
-            failNums = failNums + before
-            echo before
-            echo failNums
+        if mappings.hasKey(num):
+            let after = mappings[num]
+
+            for val in after:
+                if val in seen:
+                    return false
     
     return true
 
+
+proc part1(contents: string) =
+    let mappings = readMappings(contents)
+    let order = readOrder(contents)
+
+    var sum = 0
+    for line in order:
+        if checkOrder(mappings, line):
+            let middleIndex = int(len(line) / 2)
+            sum += line[middleIndex]
+
+    echo sum
+
+
 let contents = readFile("input.txt")
-let mappings = readMappings(contents)
-let order = readOrder(contents)
-
-var sum = 0
-for line in order:
-    if checkOrder(mappings, line):
-        let middleIndex = int(len(line) / 2)
-        sum += line[middleIndex]
-
-echo sum
+part1(contents)
         
