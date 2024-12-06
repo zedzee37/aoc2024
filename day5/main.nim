@@ -5,6 +5,7 @@ import std/sets
 import std/strformat
 import std/sequtils
 import std/enumerate
+import std/algorithm
 
 func readMappings(contents: string): Table[int, seq[int]] =
     result = initTable[int, seq[int]]()
@@ -75,7 +76,14 @@ func fixOrder(mappings: Table[int, seq[int]], order: seq[int]): seq[int] =
         
         result = newRes
 
-    
+func fixOrder2(mappings: Table[int, seq[int]], order: seq[int]): seq[int] =
+    result = order
+    result.sort do (x: int, y: int) -> int:
+        return if mappings.hasKey(x) and y in mappings[x]:
+            1 
+        else:
+            0
+
 let contents = readFile("input.txt")
 
 let mappings = readMappings(contents)
@@ -89,7 +97,7 @@ for line in order:
     if checkOrder(mappings, line):
         partOneSum += line[middleIndex]
     else:
-        let fixed = fixOrder(mappings, line)
+        let fixed = fixOrder2(mappings, line)
         partTwoSum += fixed[middleIndex]
 
 
