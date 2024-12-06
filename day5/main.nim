@@ -45,7 +45,7 @@ func checkOrder(mappings: Table[int, seq[int]], order: seq[int]): bool =
     
     return true
 
-proc fixOrder(mappings: Table[int, seq[int]], order: seq[int]): seq[int] =
+func fixOrder(mappings: Table[int, seq[int]], order: seq[int]): seq[int] =
     result = order
 
     var hasConflict = true
