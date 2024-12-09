@@ -2,19 +2,23 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
 )
 
 type Equation struct {
-	target int
-	leaves []Leaf
+	target  int
+	numbers []int
 }
 
-type Leaf struct {
-	left  int
-	right int
+func concatNumbers(a, b int) int {
+	numDigits := int(math.Log10(float64(b))) + 1
+	aShifted := a * int(math.Pow10(numDigits))
+	result := aShifted + b
+
+	return result
 }
 
 func check(e error) {
@@ -28,7 +32,7 @@ func parseLines(lines []string) ([]Equation, error) {
 
 	for _, line := range lines {
 		numbers := strings.Split(line, " ")
-		equation := make([]Leaf, 0)
+		equation := make([]int, 0)
 
 		target_str := numbers[0][:len(numbers[0])-1]
 		target, err := strconv.Atoi(target_str)
@@ -36,7 +40,6 @@ func parseLines(lines []string) ([]Equation, error) {
 			return nil, err
 		}
 
-		prev := -1
 		for _, num := range numbers[1:] {
 			n, err := strconv.Atoi(num)
 
@@ -44,19 +47,10 @@ func parseLines(lines []string) ([]Equation, error) {
 				return nil, err
 			}
 
-			if prev != -1 {
-				equation = append(equation, Leaf{left: prev, right: n})
-				prev = -1
-			} else {
-				prev = n
-			}
+			equation = append(equation, n)
 		}
 
-		if prev != -1 {
-			equation = append(equation, Leaf{left: prev, right: -1})
-		}
-
-		eq := Equation{target: target, leaves: equation}
+		eq := Equation{target: target, numbers: equation}
 		equations = append(equations, eq)
 	}
 
@@ -64,7 +58,23 @@ func parseLines(lines []string) ([]Equation, error) {
 }
 
 func solveEquations(equations []Equation) int {
-	
+	sum := 0
+	for _, equation := range equations {
+		if doesEquationWork(equation, 0, equation.numbers[0]) {
+			sum += equation.target
+		}
+	}
+	return sum
+}
+
+func doesEquationWork(equation Equation, i int, total int) bool {
+	if i >= len(equation.numbers)-1 {
+		return total == equation.target
+	}
+
+	return doesEquationWork(equation, i+1, total+equation.numbers[i+1]) ||
+		doesEquationWork(equation, i+1, total*equation.numbers[i+1]) ||
+		doesEquationWork(equation, i+1, concatNumbers(total, equation.numbers[i+1]))
 }
 
 func main() {
