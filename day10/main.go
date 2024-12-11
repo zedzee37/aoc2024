@@ -90,6 +90,37 @@ func print(size int, pos Vec2, final bool) {
 	fmt.Println("")
 }
 
+func countUniquePaths(grid []string, loc Vec2, i int, visited map[Vec2]bool) int {
+	if i > 9 {
+		return 1
+	}
+
+	sum := 0
+	for _, pos := range surroundingPositions(grid, loc) {
+		if visited[pos] {
+			continue
+		}
+		numRune := get(grid, pos)
+		num, err := strconv.Atoi(string(numRune))
+		if err == nil && num == i {
+			visited[pos] = true
+			sum += countUniquePaths(grid, pos, i+1, visited)
+			visited[pos] = false
+		}
+	}
+	return sum
+}
+
+func totalPathCount(grid []string, startLocations []Vec2) int {
+	count := 0
+	for _, loc := range startLocations {
+		visited := make(map[Vec2]bool)
+		visited[loc] = true
+		count += countUniquePaths(grid, loc, 1, visited)
+	}
+	return count
+}
+
 func countPaths(grid []string, from Vec2) (int, error) {
 	count := 0
 	visited := make(map[Vec2]bool, 1)
@@ -117,7 +148,7 @@ func countPaths(grid []string, from Vec2) (int, error) {
 
 				if num == i {
 					if num == 9 {
-						if !visited[surroundingPos] { 
+						if !visited[surroundingPos] {
 							count++
 							visited[surroundingPos] = true
 						}
@@ -158,7 +189,7 @@ func main() {
 	grid := strings.Split(text, "\n")
 
 	startLocations := findStartLocations(grid)
-	count, err := pathCount(grid, startLocations)
+	count := totalPathCount(grid, startLocations)
 	check(err)
 
 	fmt.Println(count)
