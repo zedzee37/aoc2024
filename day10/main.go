@@ -50,6 +50,10 @@ func isOffGrid(grid []string, loc Vec2) bool {
 	return loc[0] < 0 || loc[1] < 0 || loc[0] >= l || loc[1] >= l
 }
 
+func get(grid []string, loc Vec2) byte {
+	return grid[loc[1]][loc[0]]
+}
+
 func surroundingPositions(grid []string, loc Vec2) []Vec2 {
 	surrounding := make([]Vec2, 0)
 	directions := []Vec2{
@@ -86,52 +90,61 @@ func print(size int, pos Vec2, final bool) {
 	fmt.Println("")
 }
 
-func countPaths(grid []string, from Vec2, i int, endPositions []Vec2) ([]Vec2, error) {
-	for _, pos := range surroundingPositions(grid, from) {
-		atPos := grid[pos[1]][pos[0]]
-		numAtPos, err := strconv.Atoi(string(atPos))
-		if err != nil {
-			return []Vec2{}, err
-		}
+func countPaths(grid []string, from Vec2) (int, error) {
+	count := 0
+	visited := make(map[Vec2]bool, 1)
+	visited[from] = true
 
-		if numAtPos == i {
-			if i == 9 {
-				print(len(grid), pos, true)
-				return []Vec2{pos}, nil
-			} else {
-				print(len(grid), pos, false)
+	current := make([]Vec2, 1)
+	current[0] = from
+
+	for i := 1; i <= 9; i++ {
+		new_current := make([]Vec2, 0)
+		for _, pos := range current {
+			surrounding := surroundingPositions(grid, pos)
+
+			for _, surroundingPos := range surrounding {
+				if visited[surroundingPos] {
+					continue
+				}
+
+				numRune := get(grid, surroundingPos)
+				num, err := strconv.Atoi(string(numRune))
+
+				if err != nil {
+					return -1, err
+				}
+
+				if num == i {
+					if num == 9 {
+						if !visited[surroundingPos] {
+							count++
+							visited[surroundingPos] = true
+						}
+					} else {
+						visited[surroundingPos] = true
+						new_current = append(new_current, surroundingPos)
+					}
+				}
 			}
-
-			positions, err := countPaths(grid, pos, i+1, endPositions)
-			endPositions = append(endPositions, positions...)
-
-			if err != nil {
-				return []Vec2{}, err
-			}
 		}
+		current = new_current
 	}
 
-	return endPositions, nil
+	return count, nil
 }
 
 func pathCount(grid []string, startLocations []Vec2) (int, error) {
 	sum := 0
 
 	for _, startLoc := range startLocations {
-		uniqueEnds := make(map[Vec2]bool)
-		positions, err := countPaths(grid, startLoc, 1, []Vec2{})
-
-		for _, pos := range positions {
-			if !uniqueEnds[pos] {
-				uniqueEnds[pos] = true
-			}
-		}
+		ct, err := countPaths(grid, startLoc)
 
 		if err != nil {
 			return -1, err
 		}
 
-		sum += len(uniqueEnds)
+		sum += ct
 	}
 
 	return sum, nil
