@@ -117,7 +117,7 @@ func countPaths(grid []string, from Vec2) (int, error) {
 
 				if num == i {
 					if num == 9 {
-						if !visited[surroundingPos] {
+						if !visited[surroundingPos] { 
 							count++
 							visited[surroundingPos] = true
 						}
