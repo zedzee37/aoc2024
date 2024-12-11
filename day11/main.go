@@ -51,23 +51,61 @@ func splitNumber(n int) (int, int, error) {
 	return firstHalf, secondHalf, nil
 }
 
-func blink(stones []int) []int {
+func blink(stones []int, memo *map[int][]int) []int {
 	new_stones := []int{}
 	for _, stone := range stones {
-		if stone == 0 {
-			new_stones = append(new_stones, 1)
-		} else {
-			num1, num2, err := splitNumber(stone)
+		nums, ok := (*memo)[stone]
 
-			if err != nil {
-				new_stones = append(new_stones, stone*2024)
+		if ok {
+			for _, num := range nums {
+				new_stones = append(new_stones, num)
+			}
+		} else {
+			if stone == 0 {
+				new_stones = append(new_stones, 1)
+				(*memo)[0] = []int{1}
 			} else {
-				new_stones = append(new_stones, num1)
-				new_stones = append(new_stones, num2)
+				num1, num2, err := splitNumber(stone)
+
+				if err != nil {
+					num := stone * 2024
+					(*memo)[stone] = []int{num}
+					new_stones = append(new_stones, num)
+				} else {
+					(*memo)[stone] = []int{num1, num2}
+					new_stones = append(new_stones, num1)
+					new_stones = append(new_stones, num2)
+				}
 			}
 		}
 	}
 	return new_stones
+}
+
+func stoneCount(number int, iterations int, memo *map[[2]int]int) int {
+	ct, ok := (*memo)[[2]int{number, iterations}]
+
+	if ok {
+		return ct
+	}
+
+	ret := 0
+	if iterations == 0 {
+		ret = 1
+	} else if number == 0 {
+		ret = stoneCount(1, iterations-1, memo)
+	} else {
+		num1, num2, err := splitNumber(number)
+
+		if err != nil {
+			ret = stoneCount(number*2024, iterations-1, memo)
+		} else {
+			ret = stoneCount(num1, iterations-1, memo) + stoneCount(num2, iterations-1, memo)
+		}
+	}
+
+	(*memo)[[2]int{number, iterations}] = ret
+	return ret
 }
 
 func main() {
@@ -78,10 +116,10 @@ func main() {
 	numbers, err := parseInput(text)
 	check(err)
 
-	for i := 0; i < 25; i++ {
-		numbers = blink(numbers)
-		fmt.Println(numbers)
+	memo := make(map[[2]int]int)
+	sum := 0
+	for _, i := range numbers {
+		sum += stoneCount(i, 75, &memo)
 	}
-
-	fmt.Println(len(numbers))
+	fmt.Println(sum)
 }
