@@ -66,18 +66,56 @@ func getIdx(size int, pos Vec2) int {
 	return pos[0]*size + pos[1]
 }
 
-func getRegions(grid []string) []*Region {
-	regions := make([]*Region, 0)
+func getFencePrice(grid []string) int {
 	size := len(grid)
+
 	visited := make(map[Vec2]bool)
+	price := 0
 
 	for y := 0; y < size; y++ {
-		for x := 0; x < size; {
-			pos := Vec2{x, y}
+		for x := 0; x < size; x++ {
+			curPos := Vec2{x, y}
+			if visited[curPos] {
+				continue
+			}
+
+			visited[curPos] = true
+			current := make([]Vec2, 1)
+			current[0] = Vec2{x, y}	
+
+			perimiter := 0
+			count := 1
+
+			ch := get(grid, current[0])
+			
+			for len(current) > 0 {
+				newCurrent := make([]Vec2, 0)
+
+				for _, pos := range current {
+					neighbors := surroundingPositions(pos)
+
+					for _, neighbor := range neighbors {
+						if isOffGrid(size, neighbor) || get(grid, neighbor) != ch {
+							perimiter++
+							continue
+						}
+
+						if !visited[neighbor] {
+							visited[neighbor] = true
+							newCurrent = append(newCurrent, neighbor)
+							count++
+						}
+					}
+				}
+
+				current = newCurrent
+			}
+
+			price += perimiter * count
 		}
 	}
 
-	return regions
+	return price
 }
 
 func main() {
@@ -87,11 +125,6 @@ func main() {
 	contents := string(data)
 	grid := strings.Split(contents, "\n")
 	grid = grid[:len(grid)-1]
-	regions := getRegions(grid)
-
-	sum := 0
-	for _, region := range regions {
-		sum += region.perimeter * region.area()
-	}
-	fmt.Println(sum)
+	price := getFencePrice(grid)
+	fmt.Println(price)
 }
