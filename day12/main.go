@@ -13,7 +13,7 @@ func check(err error) {
 }
 
 type Region struct {
-	cells []Vec2
+	cells     []Vec2
 	perimeter int
 }
 
@@ -62,18 +62,29 @@ func get(grid []string, pos Vec2) byte {
 	return grid[pos[1]][pos[0]]
 }
 
+func allGridPositions(size int) []Vec2 {
+	positions := make([]Vec2, 0, size*size)
+	for y := 0; y < size; y++ {
+		for x := 0; x < size; x++ {
+			positions = append(positions, Vec2{x, y})
+		}
+	}
+	return positions
+}
+
+func getIdx(size int, pos Vec2) int {
+	return pos[0]*size + pos[1]
+}
+
 func getRegions(grid []string) []*Region {
-	regionMap := make(map[Vec2]*Region)
 	regions := make([]*Region, 0)
 	size := len(grid)
-	
-	y := 0
-	x := 0
-	for y < size {
-		for x < size {
-			x++
-		}
-		y++
+	unvisited := allGridPositions(size)
+	visited := make(map[Vec2]bool)
+
+	for len(visited) != len(visited) {
+		pos := unvisited[0]
+		unvisited = unvisited[1:]
 	}
 
 	return regions
@@ -85,13 +96,12 @@ func main() {
 
 	contents := string(data)
 	grid := strings.Split(contents, "\n")
-	grid = grid[:len(grid) - 1]
+	grid = grid[:len(grid)-1]
 	regions := getRegions(grid)
 
 	sum := 0
 	for _, region := range regions {
 		sum += region.perimeter * region.area()
-		fmt.Println(region.perimeter)
 	}
 	fmt.Println(sum)
 }
