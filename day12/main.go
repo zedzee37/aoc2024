@@ -62,16 +62,6 @@ func get(grid []string, pos Vec2) byte {
 	return grid[pos[1]][pos[0]]
 }
 
-func allGridPositions(size int) []Vec2 {
-	positions := make([]Vec2, 0, size*size)
-	for y := 0; y < size; y++ {
-		for x := 0; x < size; x++ {
-			positions = append(positions, Vec2{x, y})
-		}
-	}
-	return positions
-}
-
 func getIdx(size int, pos Vec2) int {
 	return pos[0]*size + pos[1]
 }
@@ -79,12 +69,12 @@ func getIdx(size int, pos Vec2) int {
 func getRegions(grid []string) []*Region {
 	regions := make([]*Region, 0)
 	size := len(grid)
-	unvisited := allGridPositions(size)
 	visited := make(map[Vec2]bool)
 
-	for len(visited) != len(visited) {
-		pos := unvisited[0]
-		unvisited = unvisited[1:]
+	for y := 0; y < size; y++ {
+		for x := 0; x < size; {
+			pos := Vec2{x, y}
+		}
 	}
 
 	return regions
