@@ -1,0 +1,7 @@
+corner type 1:
+A. Two perpendicular cardinals, one diagonal
+CA
+
+corner type 2:
+AC Two perpendicular cardinals, no diagonals
+.A
