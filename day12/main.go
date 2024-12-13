@@ -110,7 +110,34 @@ func isHorizontal(direction Vec2) bool {
 }
 
 func countCorners(grid []string, edges map[Vec2]bool, ch byte, pos Vec2) int {
+	count := 0
+	cardinalCount := 0
 
+	for _, dir := range cardinals {
+		perpendicular := dir.left()
+		perpendicularPos := pos.add(perpendicular)
+		dirPos := pos.add(dir)
+
+		if isValid(grid, dirPos, ch) {
+			cardinalCount++
+		}
+
+		if edges[perpendicularPos] && edges[dirPos] {
+			diagonalPos := pos.add(dir.add(perpendicular).neg())
+
+			if !isValid(grid, diagonalPos, ch) {
+				count++
+			}
+		}
+	}
+
+	if cardinalCount == 1 {
+		count++
+	}
+
+	fmt.Printf("There is %d corners at %d, %d\n", count, pos[0], pos[1])
+
+	return count
 }
 
 func countSides(grid []string, edges map[Vec2]bool, ch byte) int {
@@ -152,8 +179,8 @@ func getBulkFencePrice(grid []string) int {
 						neighbor := pos.add(dir)
 
 						if isOffGrid(size, neighbor) || get(grid, neighbor) != ch {
-							visitedEdges[neighbor] = true
-							edges = append(edges, neighbor)
+							visitedEdges[pos] = true
+							edges = append(edges, pos)
 							continue
 						}
 
