@@ -124,8 +124,9 @@ func countCorners(grid []string, edges map[Vec2]bool, ch byte, pos Vec2) int {
 
 		if edges[perpendicularPos] && edges[dirPos] {
 			diagonalPos := pos.add(dir.add(perpendicular).neg())
+			diagonal2Pos := pos.add(dir.add(perpendicular))
 
-			if !isValid(grid, diagonalPos, ch) {
+			if !isValid(grid, diagonalPos, ch) || !isValid(grid, diagonal2Pos, ch) {
 				count++
 			}
 		}
