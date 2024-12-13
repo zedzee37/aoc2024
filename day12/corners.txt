@@ -1,7 +1,15 @@
 corner type 1:
-A. Two perpendicular cardinals, one diagonal
-CA
+AD Two perpendicular cardinals, one diagonal
+CA From the diagonal: Two cardinals and one diagonal
 
 corner type 2:
-AC Two perpendicular cardinals, no diagonals
-.A
+..D From the diagonal: One diagonal and no cardinals
+AC. From the corner: two perpendicular cardinals, no diagonals
+.A. 
+
+from the diagonal algorithm:
+if there is one diagonal, and no cardinals, then there is one corner
+
+otherwises, if there is a cardinal in a direction, check the perpendicular cardinal,
+then check the cardinal + perpendicular to see if they are all filled
+count 1 for each
