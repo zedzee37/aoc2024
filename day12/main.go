@@ -132,7 +132,7 @@ func countCorners(grid []string, edges map[Vec2]bool, ch byte, pos Vec2) int {
 	}
 
 	if cardinalCount == 1 {
-		count++
+		count += 2
 	}
 
 	fmt.Printf("There is %d corners at %d, %d\n", count, pos[0], pos[1])
