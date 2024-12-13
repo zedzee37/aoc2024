@@ -209,6 +209,7 @@ func getBulkFencePrice(grid []string) int {
 				current = newCurrent
 			}
 
+			printEdges(size, visitedEdges)
 			sideCount := countSides(grid, visitedEdges, ch)
 			fmt.Printf("There is %d for the letter: %c\n", sideCount, ch)
 			fmt.Println()
@@ -277,7 +278,6 @@ func main() {
 
 	contents := string(data)
 	grid := strings.Split(contents, "\n")
-	grid = grid[:len(grid)-1]
 	price := getBulkFencePrice(grid)
 	fmt.Println(price)
 }
