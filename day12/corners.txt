@@ -287,3 +287,14 @@ There is 2 corners at 4, 8, for the letter: S
 There is 2 corners at 4, 9, for the letter: S
 There is 2 corners at 5, 9, for the letter: S
 There is 6 for the letter: S
+
+1A1AA2
+AAA..A
+1AA..A
+A..AA1
+A..AAA
+2AA1A1
+
+There is 0 corners at 2, 2, for the letter: A
+There is 0 corners at 3, 3, for the letter: A
+There is 10 for the letter: A

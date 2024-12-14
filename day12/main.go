@@ -119,7 +119,6 @@ func countCorners(grid []string, ch byte, pos Vec2) int {
 
 		dirPos := pos.add(dir)
 		diagonalInner := pos.add(dir.add(perpendicular))
-		diagonalOuter := pos.add(dir.add(perpendicular).neg())
 
 		if !isValid(grid, dirPos, ch) {
 			continue
@@ -131,15 +130,11 @@ func countCorners(grid []string, ch byte, pos Vec2) int {
 			continue
 		}
 
-		isOuter := isValid(grid, diagonalOuter, ch)
+		invDirPos := pos.add(dir.neg())
+		invPerpenPos := pos.add(perpendicular.neg())
 
-		if !isOuter {
-			invDirPos := pos.add(dir.neg())
-			invPerpenPos := pos.add(perpendicular.neg())
-
-			if !isValid(grid, invDirPos, ch) && !isValid(grid, invPerpenPos, ch) {
-				count++
-			}
+		if !isValid(grid, invDirPos, ch) && !isValid(grid, invPerpenPos, ch) {
+			count++
 		}
 
 		isInner := isValid(grid, diagonalInner, ch)
@@ -223,6 +218,7 @@ func getBulkFencePrice(grid []string) int {
 			}
 			fmt.Printf("There is %d for the letter: %c\n", sideCount, ch)
 			fmt.Println()
+			fmt.Println(count)
 			price += sideCount * count
 		}
 	}
