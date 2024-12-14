@@ -109,35 +109,43 @@ func isHorizontal(direction Vec2) bool {
 	return direction == Vec2{1, 0} || direction == Vec2{-1, 0}
 }
 
-func countCorners(grid []string, edges map[Vec2]bool, ch byte, pos Vec2) int {
+func countCorners(grid []string, ch byte, pos Vec2) int {
 	count := 0
 	cardinalCount := 0
 
 	for _, dir := range cardinals {
 		perpendicular := dir.left()
 		perpendicularPos := pos.add(perpendicular)
-		dirPos := pos.add(dir)
 
-		if isValid(grid, dirPos, ch) {
-			cardinalCount++
+		dirPos := pos.add(dir)
+		diagonalInner := pos.add(dir.add(perpendicular))
+		diagonalOuter := pos.add(dir.add(perpendicular).neg())
+
+		if !isValid(grid, dirPos, ch) {
+			continue
 		}
 
-		if edges[perpendicularPos] && edges[dirPos] {
-			diagonalPos := pos.add(dir.add(perpendicular).neg())
-			diagonal2Pos := pos.add(dir.add(perpendicular))
+		cardinalCount++
 
-			isOuter := isValid(grid, diagonal2Pos, ch)
-			isInner := isValid(grid, diagonalPos, ch)
+		if !isValid(grid, perpendicularPos, ch) {
+			continue
+		}
 
-			if isOuter && !isInner {
+		isOuter := isValid(grid, diagonalOuter, ch)
+
+		if !isOuter {
+			invDirPos := pos.add(dir.neg())
+			invPerpenPos := pos.add(perpendicular.neg())
+
+			if !isValid(grid, invDirPos, ch) && !isValid(grid, invPerpenPos, ch) {
 				count++
-			} else if isInner {
-				if !isOuter {
-					count += 2
-				} else {
-					count++
-				}
 			}
+		}
+
+		isInner := isValid(grid, diagonalInner, ch)
+
+		if !isInner {
+			count++
 		}
 	}
 
@@ -157,7 +165,7 @@ func countSides(grid []string, edges map[Vec2]bool, ch byte) int {
 
 	count := 0
 	for edge := range edges {
-		count += countCorners(grid, edges, ch, edge)
+		count += countCorners(grid, ch, edge)
 	}
 	return count
 }
@@ -183,18 +191,19 @@ func getBulkFencePrice(grid []string) int {
 
 			ch := get(grid, current[0])
 			visitedEdges := make(map[Vec2]bool)
-			edges := make([]Vec2, 0)
+			sideCount := 0
 
 			for len(current) > 0 {
 				newCurrent := make([]Vec2, 0)
 
 				for _, pos := range current {
+					sideCount += countCorners(grid, ch, pos)
+
 					for _, dir := range cardinals {
 						neighbor := pos.add(dir)
 
 						if isOffGrid(size, neighbor) || get(grid, neighbor) != ch {
 							visitedEdges[pos] = true
-							edges = append(edges, pos)
 							continue
 						}
 
@@ -209,8 +218,9 @@ func getBulkFencePrice(grid []string) int {
 				current = newCurrent
 			}
 
-			printEdges(size, visitedEdges)
-			sideCount := countSides(grid, visitedEdges, ch)
+			if count == 1 {
+				sideCount = 4
+			}
 			fmt.Printf("There is %d for the letter: %c\n", sideCount, ch)
 			fmt.Println()
 			price += sideCount * count
@@ -278,6 +288,7 @@ func main() {
 
 	contents := string(data)
 	grid := strings.Split(contents, "\n")
+	grid = grid[:len(grid)-1]
 	price := getBulkFencePrice(grid)
 	fmt.Println(price)
 }
