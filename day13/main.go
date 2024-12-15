@@ -112,8 +112,8 @@ func parseInput(contents string) ([]Game, error) {
 			yA: lineA[1],
 			xB: lineB[0],
 			yB: lineB[1],
-			winX: finalLine[0],
-			winY: finalLine[1],
+			winX: 10000000000000 + finalLine[0],
+			winY: 10000000000000 + finalLine[1],
 		})
 	}
 
