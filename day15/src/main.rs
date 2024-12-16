@@ -143,6 +143,73 @@ fn simulate_robot(grid: &mut Vec<Vec<char>>, movements: &Vec<Movement>) -> usize
     return total;
 }
 
+fn get_i(grid: &Vec<Vec<char>>, pos: (i32, i32)) -> char {
+    return grid[pos.1 as usize][pos.0 as usize];
+}
+
+use std::collections::HashSet;
+
+fn propagate_box(
+    grid: &Vec<Vec<char>>, 
+    from: (i32, i32),
+    dir: (i32, i32),
+) -> Option<Vec<(i32, i32)>> {
+    let mut boxes = Vec::<(i32, i32)>::new();
+    let mut current_boxes = Vec::<(i32, i32)>::new();
+    let mut visited = HashSet::<(i32, i32)>::new(); // To track visited positions
+
+    current_boxes.push(from);
+    visited.insert(from);
+
+    while !current_boxes.is_empty() {
+        let mut next_boxes = Vec::<(i32, i32)>::new();
+        for pos in current_boxes {
+            let ch = get_i(grid, pos);
+            let mut other_pos = pos;
+            boxes.push(pos);
+
+            match ch {
+                '[' => other_pos.0 += 1,
+                ']' => other_pos.0 -= 1,
+                _ => {}
+            }
+
+            if !visited.contains(&other_pos) {
+                boxes.push(other_pos);
+                visited.insert(other_pos);
+            }
+
+            let next_pos_1 = (pos.0 + dir.0, pos.1 + dir.1); 
+            let next_pos_2 = (other_pos.0 + dir.0, other_pos.1 + dir.1);
+
+            if !visited.contains(&next_pos_1) {
+                match get_i(grid, next_pos_1) {
+                    '#' => return None,
+                    '[' | ']' => {
+                        next_boxes.push(next_pos_1);
+                        visited.insert(next_pos_1);
+                    },
+                    _ => {},
+                }
+            }
+
+            if !visited.contains(&next_pos_2) {
+                match get_i(grid, next_pos_2) {
+                    '#' => return None,
+                    '[' | ']' => {
+                        next_boxes.push(next_pos_2);
+                        visited.insert(next_pos_2);
+                    },
+                    _ => {},
+                }
+            }
+        }
+        current_boxes = next_boxes;
+    }
+
+    Some(boxes)
+}
+
 fn simulate_other_robot(grid: &mut Vec<Vec<char>>, movements: &Vec<Movement>) -> usize {
     let mut pos = find_robot(grid).unwrap();
 
@@ -163,31 +230,21 @@ fn simulate_other_robot(grid: &mut Vec<Vec<char>>, movements: &Vec<Movement>) ->
                 grid[pos.1][pos.0] = '@';
             },
             '#' => {},
-            'O' => {
+            '[' | ']' => {
                 // Find the last box pos, or dont move at all.
-                let mut last_box_pos = (next_pos.0 + dir.0, next_pos.1 + dir.1);
-                let mut can_move = true;
+                let boxes_maybe = propagate_box(grid, next_pos, dir);
+                
+                if !boxes_maybe.is_none() {
+                    let boxes = boxes_maybe.unwrap();
 
-                loop {
-                    let cur_ch = grid[last_box_pos.1 as usize][last_box_pos.0 as usize]; 
-
-                    match cur_ch {
-                        '.' => break,
-                        '#' => {
-                            can_move = false;
-                            break;
-                        },
-                        _ => {}
+                    for b in boxes.iter().rev() {
+                        grid[(b.1 + dir.1) as usize][(b.0 + dir.0) as usize] = get_i(grid, *b);
+                        grid[b.1 as usize][b.0 as usize] = '.';
                     }
-
-                    last_box_pos = (last_box_pos.0 + dir.0, last_box_pos.1 + dir.1);
-                }
-
-                if can_move {
+                    
                     grid[pos.1][pos.0] = '.';
                     pos = (next_pos.0 as usize, next_pos.1 as usize);
                     grid[pos.1][pos.0] = '@';
-                    grid[last_box_pos.1 as usize][last_box_pos.0 as usize] = 'O'
                 }
             },
             _ => {} 
@@ -199,12 +256,14 @@ fn simulate_other_robot(grid: &mut Vec<Vec<char>>, movements: &Vec<Movement>) ->
     for y in 0..grid.len() {
         for x in 0..grid[y].len() {
             let ch = grid[y][x];
+            print!("{}", ch);
 
-            if ch == 'O' {
+            if ch == '[' {
                 let gps = y * 100 + x;
                 total += gps;
             }
         }
+        println!();
     }
 
     return total;
