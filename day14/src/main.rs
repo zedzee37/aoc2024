@@ -60,6 +60,48 @@ fn get_quadrant(x: i32, y: i32, width: i32, height: i32) -> i32 {
         0
     };
 }
+
+fn construct_grid(robots: &Vec<Robot>, width: i32, height: i32) -> Vec<Vec<i32>> {
+    let mut grid: Vec<Vec<i32>> = vec![vec![0; width as usize]; height as usize];
+
+    robots.iter().for_each(|robot| {
+        grid[robot.y as usize][robot.x as usize] += 1;
+    });
+
+    return grid;
+}
+
+fn print_grid(grid: &Vec<Vec<i32>>) {}
+
+fn step_robots(robots: &mut Vec<Robot>, width: i32, height: i32) {
+    let mut amt_in_row = 0;
+    let mut found_tree = false;
+    let mut i = 0;
+    while !found_tree {
+        robots.iter_mut().for_each(|robot| {
+            robot.tick(1, width, height);
+        });
+
+        let grid = construct_grid(robots, width, height);
+        grid.iter().for_each(|row| {
+            row.iter().for_each(|n| {
+                if !found_tree {
+                    if *n == 0 {
+                        amt_in_row = 0;
+                    } else {
+                        amt_in_row += 1;
+                    }
+
+                    found_tree = amt_in_row >= 7;
+                }
+            });
+        });
+
+        i += 1;
+    }
+    println!("{}", i);
+}
+
 fn simulate_robots(robots: &mut Vec<Robot>, width: i32, height: i32) -> i32 {
     let mut robot_counts: [i32; 4] = [0; 4];
     robots.iter_mut().for_each(|robot| {
@@ -77,6 +119,5 @@ fn simulate_robots(robots: &mut Vec<Robot>, width: i32, height: i32) -> i32 {
 fn main() {
     let file_contents = std::fs::read_to_string("input.txt").unwrap();
     let mut robots = parse_input(file_contents);
-    let result = simulate_robots(&mut robots, 101, 103);
-    println!("{}", result)
+    step_robots(&mut robots, 101, 103);
 }
