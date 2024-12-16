@@ -10,7 +10,7 @@ enum Movement {
 }
 
 impl Movement {
-    fn get_dir(self) -> (i32, i32) {
+    fn get_dir(&self) -> (i32, i32) {
         return match self {
             Self::Left => (-1, 0),
             Self::Right => (1, 0),
@@ -48,7 +48,7 @@ fn find_robot(grid: &Vec<Vec<char>>) -> Option<(usize, usize)> {
     return None;
 }
 
-fn simulate_robot(grid: &mut Vec<Vec<char>>, movements: Vec<Movement>) -> Result<usize, Error> {
+fn simulate_robot(grid: &mut Vec<Vec<char>>, movements: &Vec<Movement>) -> Result<usize, Error> {
     let mut pos = find_robot(grid).unwrap();
 
     for movement in movements {
@@ -61,6 +61,8 @@ fn simulate_robot(grid: &mut Vec<Vec<char>>, movements: Vec<Movement>) -> Result
 fn main() {
     let file_contents = fs::read_to_string("input.txt").unwrap();
     let split: Vec<&str> = file_contents.split("\n\n").collect();
-    let grid = parse_grid(split[0]);
+    let mut grid = parse_grid(split[0]);
     let movements = parse_movements(split[1]);
+    let result = simulate_robot(&mut grid, &movements).unwrap();
+    println!("{}", result);
 }
