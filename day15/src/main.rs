@@ -23,6 +23,31 @@ fn parse_grid(contents: &str) -> Vec<Vec<char>> {
     return contents.split("\n").map(|str| str.chars().collect()).collect();
 }
 
+fn parse_wider_grid(contents: &str) -> Vec<Vec<char>> {
+    return contents.split("\n").map(|str| {
+            let mut chars = Vec::<char>::new();
+
+            for ch in str.chars() {
+                match ch {
+                    'O' => {
+                        chars.push('[');
+                        chars.push(']');
+                    },
+                    '@' => {
+                        chars.push('@');
+                        chars.push('.');
+                    },
+                    _ => {
+                        chars.push(ch);
+                        chars.push(ch);
+                    },
+                }
+            }
+
+            return chars;
+    }).collect();
+}
+
 fn parse_movements(contents: &str) -> Vec<Movement> {
     return contents
         .chars()
@@ -125,4 +150,12 @@ fn main() {
     let movements = parse_movements(split[1]);
     let result = simulate_robot(&mut grid, &movements);
     println!("{}", result);
+
+    let wider_grid = parse_wider_grid(split[0]);
+    for y in 0..wider_grid.len() {
+        for x in 0..wider_grid[y].len() {
+            print!("{}", wider_grid[y][x]);
+        }   
+        println!()
+    }
 }
