@@ -82,6 +82,8 @@ func findShortestPath(grid []string) ([]Vec2, error) {
 	}
 
 	path := make([]Vec2, 0)
+	path = append(path, endPos)
+	path = append(path, startPos)
 	return path, nil
 }
 
