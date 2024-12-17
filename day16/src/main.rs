@@ -1,4 +1,4 @@
-use std::{fs, os::unix::fs::FileExt};
+use std::{collections::HashSet, fs, };
 
 fn add(a: (i32, i32), b: (i32, i32)) -> (i32, i32) {
     return (a.0 + b.0, a.1 + b.1);
@@ -52,12 +52,17 @@ struct AStarCell {
     h: i32,
 }
 
+fn is_on_grid(grid: &Vec<Vec<char>>, pos: (i32, i32)) -> bool {
+    return pos.0 >= 0 || pos.1 >= 0 || pos.1 < grid.len() as i32 || pos.0 < grid.len() as i32;
+}
+
 fn get_surrounding_positions(grid: &Vec<Vec<char>>, pos: (i32, i32)) -> Vec<(i32, i32)> {
     let mut surrounding = Vec::<(i32, i32)>::new();
 
     for dir in CARDINALS {
-        if get_grid(grid, add(pos, dir)) != '#' {
-            surrounding.push(add(pos, dir));
+        let new_pos = add(pos, dir);
+        if is_on_grid(grid, new_pos) && get_grid(grid, new_pos) != '#' {
+            surrounding.push(new_pos);
         }
     }
 
@@ -68,10 +73,10 @@ fn parse_input(contents: String) -> Vec<Vec<char>> {
     return contents.split("\n").map(|s| s.chars().collect()).collect();
 }
 
-fn find_start_pos(grid: &Vec<Vec<char>>) -> Option<(i32, i32)> {
+fn find_char(grid: &Vec<Vec<char>>, ch: char) -> Option<(i32, i32)> {
     for y in 0..grid.len() {
         for x in 0..grid.len() {
-            if grid[y][x] == 'S' {
+            if grid[y][x] == ch {
                 return Some((x as i32, y as i32));
             }
         }
@@ -79,8 +84,55 @@ fn find_start_pos(grid: &Vec<Vec<char>>) -> Option<(i32, i32)> {
     return None
 }
 
+fn get_lowest_f_cost(cells: &Vec<AStarCell>) -> i32 {
+    let mut lowest_f = cells[0].f;
+    let mut lowest_cell = 0;
+
+    for i in 0..cells.len() {
+        let cell = &cells[i];
+
+        if cell.f < lowest_f {
+            lowest_f = cell.f;
+            lowest_cell = i as i32;
+        }
+    }
+
+    return lowest_cell;
+}
+
 fn find_shortest_path_cost(grid: &Vec<Vec<char>>) -> i32 {
-    let start_pos = find_start_pos(grid).unwrap();
+    let visited = HashSet::<(i32, i32)>::new();
+    let start_pos = find_char(grid, 'S').unwrap();
+    let end_pos = find_char(grid, 'E').unwrap();
+
+    let mut current = Vec::<AStarCell>::new();
+    let h = manhattan_distance(start_pos, end_pos);
+    current.push(AStarCell {
+        pos: start_pos,
+        g: 0,
+        h: h,
+        f: h,
+    });
+
+    while true {
+        let lowest_cost_cell_idx = get_lowest_f_cost(&current);
+        let lowest_cost_cell = &current[lowest_cost_cell_idx as usize];
+
+        let surrounding = get_surrounding_positions(grid, lowest_cost_cell.pos);
+        for neighbor in surrounding {
+            let g_cost = lowest_cost_cell.g + 1;        
+            let h_cost = manhattan_distance(neighbor, end_pos);
+            
+            current.push(AStarCell {
+                pos: neighbor,
+                g: g_cost,
+                h: h_cost,
+                f: g_cost + h_cost,
+            });
+        }
+    }
+
+    return 0;
 }
 
 fn main() {
