@@ -45,6 +45,13 @@ const CARDINALS: [(i32, i32); 4] = [
     (0, -1),
 ];
 
+struct AStarCell {
+    pos: (i32, i32),
+    f: i32,
+    g: i32,
+    h: i32,
+}
+
 fn get_surrounding_positions(grid: &Vec<Vec<char>>, pos: (i32, i32)) -> Vec<(i32, i32)> {
     let mut surrounding = Vec::<(i32, i32)>::new();
 
@@ -59,6 +66,21 @@ fn get_surrounding_positions(grid: &Vec<Vec<char>>, pos: (i32, i32)) -> Vec<(i32
 
 fn parse_input(contents: String) -> Vec<Vec<char>> {
     return contents.split("\n").map(|s| s.chars().collect()).collect();
+}
+
+fn find_start_pos(grid: &Vec<Vec<char>>) -> Option<(i32, i32)> {
+    for y in 0..grid.len() {
+        for x in 0..grid.len() {
+            if grid[y][x] == 'S' {
+                return Some((x as i32, y as i32));
+            }
+        }
+    }
+    return None
+}
+
+fn find_shortest_path_cost(grid: &Vec<Vec<char>>) -> i32 {
+    let start_pos = find_start_pos(grid).unwrap();
 }
 
 fn main() {
