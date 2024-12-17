@@ -58,6 +58,13 @@ func parseInput(input string) []string {
 	return strings.Split(input, "\n")
 }
 
+type AStarNode struct {
+	pos Vec2
+	g   int
+	h   int
+	f   int
+}
+
 func findChar(grid []string, ch byte) (Vec2, error) {
 	for y := 0; y < len(grid); y++ {
 		for x := 0; x < len(grid); x++ {
@@ -68,6 +75,13 @@ func findChar(grid []string, ch byte) (Vec2, error) {
 	}
 
 	return Vec2{-1, -1}, fmt.Errorf("Could not find character: '%c'.", ch)
+}
+
+// Returns the index of the lowest cost node
+func findLowestCostNode(nodes []AStarNode) int {
+	lowest_cost := nodes[0].f
+	node := nodes[0]
+	for 
 }
 
 func findShortestPath(grid []string) ([]Vec2, error) {
@@ -86,6 +100,19 @@ func findShortestPath(grid []string) ([]Vec2, error) {
 
 	visited := make(map[Vec2]bool)
 	visited[startPos] = true
+
+	current := make([]AStarNode, 0)
+	startDst := startPos.manhattanDistance(endPos)
+	current = append(current, AStarNode{
+		pos: startPos,
+		g:   0,
+		h:   startDst,
+		f:   startDst,
+	})
+
+	for true {
+
+	}
 
 	return path, nil
 }
