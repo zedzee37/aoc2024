@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 typedef struct {
     int32_t x;
@@ -120,7 +121,6 @@ void check_heap_down(PriorityQueue *queue, uint32_t i) {
     }
 }
 
-
 Node queue_pop(PriorityQueue *queue) {
     Node ret = queue->nodes[0];
     queue->nodes[0] = queue->nodes[queue->len - 1];
@@ -130,6 +130,18 @@ Node queue_pop(PriorityQueue *queue) {
     return ret;
 }
 
+char **read_input(const char *file_path) {
+    FILE *file_handle = fopen(file_path, "r");
+    if (!file_handle) {
+        return NULL;
+    }
+
+    fseek(file_handle, 0, SEEK_END);
+    size_t size = ftell(file_handle);
+    fseek(file_handle, 0, SEEK_SET);
+
+    fclose(file_handle); 
+}
 
 int main() {
     PriorityQueue *queue = new_queue();
