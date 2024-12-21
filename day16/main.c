@@ -130,7 +130,12 @@ Node queue_pop(PriorityQueue *queue) {
     return ret;
 }
 
-char **read_input(const char *file_path) {
+typedef struct {
+    char **lines;
+    size_t size;
+} Grid;
+
+Grid *read_input(const char *file_path) {
     FILE *file_handle = fopen(file_path, "r");
     if (!file_handle) {
         return NULL;
@@ -139,12 +144,45 @@ char **read_input(const char *file_path) {
     fseek(file_handle, 0, SEEK_END);
     size_t size = ftell(file_handle);
     fseek(file_handle, 0, SEEK_SET);
+    
+    size_t capacity = 10;
+    size_t len = 0;
+    char **lines = calloc(capacity, sizeof(char *));
 
+    char *line = NULL;
+    size_t line_len = 0;
+    while (getline(&line, &line_len, file_handle) != -1) {
+        if (len >= capacity - 1) {
+            capacity *= 2;
+            lines = reallocarray(lines, capacity, sizeof(char *));
+        }
+
+        lines[len++] = strdup(line);
+        free(line);
+        line = NULL;
+    }
+
+    free(line);
     fclose(file_handle); 
+
+    Grid *grid = malloc(sizeof(Grid));
+    grid->lines = lines;
+    grid->size = len;
+    return grid;
+}
+
+void grid_free(Grid *grid) {
+    for (int i = 0; i < grid->size; i++) {
+        free(grid->lines[i]);
+    }
+    free(grid->lines);
+    free(grid);
 }
 
 int main() {
-    PriorityQueue *queue = new_queue();
-
+    Grid *grid = read_input("input.txt");
+    printf("%zu", grid->size);
+    
+    grid_free(grid);
     return 0;
 }

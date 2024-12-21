@@ -1,3 +1,3 @@
 run:
-	gcc main.c -o main.o
+	gcc main.c -g -o main.o
 	./main.o
