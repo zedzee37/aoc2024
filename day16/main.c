@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "limits.h"
 #include <string.h>
 
 typedef struct {
@@ -26,6 +27,10 @@ Vec2 right(Vec2 dir) {
 Vec2 left(Vec2 dir) {
     Vec2 res = { .x = dir.y, .y = -dir.x };
     return res;
+}
+
+bool vec2_eq(Vec2 a, Vec2 b) {
+    return a.x == b.x && a.y == b.y;
 }
 
 typedef struct {
@@ -90,13 +95,13 @@ void check_heap(PriorityQueue *queue) {
     }
 }
 
-void queue_insert(PriorityQueue *queue, Node *node) {
+void queue_insert(PriorityQueue *queue, Node node) {
     if (queue->capacity >= queue->len - 1) {
         queue->capacity *= 2;
         queue->nodes = realloc(queue->nodes, sizeof(Node) * queue->capacity);
     }
 
-    queue->nodes[queue->len++] = *node;
+    queue->nodes[queue->len++] = node;
     check_heap(queue);
 }
 
@@ -128,6 +133,10 @@ Node queue_pop(PriorityQueue *queue) {
 
     check_heap_down(queue, 0);
     return ret;
+}
+
+size_t queue_len(PriorityQueue *queue) {
+    return queue->len;
 }
 
 typedef struct {
@@ -179,10 +188,83 @@ void grid_free(Grid *grid) {
     free(grid);
 }
 
+char grid_get(Grid *grid, Vec2 pos) {
+    return grid->lines[pos.y][pos.x];
+}
+
+char is_off_grid(Grid *grid, Vec2 pos) {
+    return pos.y < 0 || pos.x < 0 || pos.y >= grid->size || pos.x >= grid->size;
+}
+
+Node *grid_get_shortest_path(Grid *grid, size_t *len) {
+    *len = 1;
+    Node *paths = malloc(sizeof(Node) * *len);
+
+    Vec2 start_pos = { 1, grid->size - 2 };
+    Vec2 end_pos = { grid->size - 2, 1 };
+
+    PriorityQueue *current = new_queue();
+    Vec2 right_dir = { 1, 0 };
+    Node start_node = {
+        start_pos,
+        right_dir,
+        0
+    };
+    queue_insert(current, start_node);
+    uint32_t lowest_cost = INT_MAX;
+
+    while (queue_len(current) > 0) {
+        Node node = queue_pop(current);
+
+        Vec2 neighbor_directions[3] = {
+            node.dir,
+            right(node.dir),
+            left(node.dir),
+        };
+        for (int i = 0; i < 3; i++) {
+            Vec2 dir = neighbor_directions[i];
+            Vec2 neighbor = add(node.pos, dir);
+            
+            uint32_t cost = node.cost + 1;
+            if (!vec2_eq(dir, node.dir)) {
+                cost += 1000;
+            }
+
+            if (cost > lowest_cost) {
+                continue;
+            }
+
+            Node neighbor_node = {
+                neighbor,
+                dir,
+                cost
+            };
+
+            if (vec2_eq(neighbor, end_pos) && cost <= lowest_cost) {
+                lowest_cost = cost;
+
+                size_t len_m1 = (*len) - 1;
+                paths[len_m1] = neighbor_node;
+
+                *(len) += 1;  
+                paths = reallocarray(paths, *len, sizeof(Node));
+            } else {
+                queue_insert(current, neighbor_node);
+            }
+        }
+    }
+
+    queue_free(current);
+    return paths;
+}
+
 int main() {
     Grid *grid = read_input("input.txt");
-    printf("%zu", grid->size);
     
+    size_t path_count;
+    Node *shortest_paths = grid_get_shortest_path(grid, &path_count);
+    
+    free(shortest_paths);
     grid_free(grid);
     return 0;
 }
