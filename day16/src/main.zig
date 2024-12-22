@@ -34,6 +34,14 @@ const Vec2 = struct {
             .y = -self.x,
         };
     }
+
+    inline fn eq(self: Vec2, other: Vec2) bool {
+        return self.x == other.x and self.y == other.y;
+    }
+
+    inline fn manhattanDistance(self: Vec2, other: Vec2) u32 {
+        return @abs(self.x - other.x) + @abs(self.y - other.y); 
+    }
 };
 
 fn PriorityQueue(comptime T: type, comptime compareFn: fn(a: T, b: T) bool) type {
@@ -129,15 +137,21 @@ fn PriorityQueue(comptime T: type, comptime compareFn: fn(a: T, b: T) bool) type
 const Node = struct {
     pos: Vec2,
     dir: Vec2,
+    g: u32,
     cost: u32,
+    prev: ?*const Node,
+    length: usize,
 
     const Self = @This();
 
-    fn init(pos: Vec2, dir: Vec2, cost: u32) Self {
+    fn init(pos: Vec2, dir: Vec2, g: u32, cost: u32, prev: ?*const Node, length: usize,) Self {
         return .{
             .pos = pos,
             .dir = dir,
+            .g = g,
             .cost = cost,
+            .prev = prev,
+            .length = length,
         };
     }
 
@@ -149,12 +163,175 @@ const Node = struct {
         };
     }
 
-    fn compareCost(n1: Node, n2: Node) bool {
+    fn compareCost(n1: *const Node, n2: *const Node) bool {
         return n1.cost < n2.cost;
+    }
+
+    fn followPath(self: Self, allocator: Allocator) !std.ArrayList(Vec2) {
+        var path = std.ArrayList(Vec2).init(allocator); 
+        var current: ?*const Node = &self;
+        
+        while (current != null) {
+            try path.append(current.?.pos);    
+            current = current.?.prev;
+        }
+
+        return path;
+    }
+};
+
+const Grid = struct {
+    allocator: Allocator,
+    lines: std.ArrayList([]u8),
+
+    const Self = @This();
+
+    fn parseInput(allocator: Allocator, file_path: []const u8) !Self {
+        var file_handle = try std.fs.cwd().openFile(file_path, .{}); 
+        defer file_handle.close(); 
+        
+        var buf_reader = std.io.bufferedReader(file_handle.reader());
+        var in_stream = buf_reader.reader();
+
+        var lines = std.ArrayList([]u8).init(allocator);
+        while (try in_stream.readUntilDelimiterOrEofAlloc(allocator, '\n', 1024,)) |line| {
+            try lines.append(line); 
+        }
+
+        return .{
+            .allocator = allocator,
+            .lines = lines
+        };
+    }
+
+    fn deinit(self: Self) void {
+        for (self.lines.items) |line| {
+            self.allocator.free(line);
+        }
+        self.lines.deinit();
+    }
+
+    inline fn size(self: Self) usize {
+        return self.lines.items.len;
+    }
+
+    inline fn isOffGrid(self: Self, pos: Vec2) bool {
+        return pos.x < 0 or pos.y < 0 or pos.x >= self.size() or pos.y >= self.size();
+    }
+
+    inline fn get(self: Self, pos: Vec2) u8 {
+        const x = @as(usize, @intCast(pos.x));
+        const y = @as(usize, @intCast(pos.y));
+
+        return self.lines.items[y][x];
+    }
+
+    fn getShortestPaths(self: Self, arena: *std.heap.ArenaAllocator) !std.ArrayList(*Node) {
+        const allocator = arena.allocator();
+        const normalize_factor = 100;
+        var paths = std.ArrayList(*Node).init(allocator);
+        
+        const one_off = @as(i32, @intCast(self.size() - 2));
+        const start_pos = Vec2.init(1, one_off);
+        const end_pos = Vec2.init(one_off, 1);
+
+        var current = PriorityQueue(*const Node, Node.compareCost).init(allocator);
+        defer current.deinit();
+        
+        const start_node = try allocator.create(Node);
+        start_node.* = Node.init(
+            start_pos, 
+            Vec2.init(1, 0), 
+            0, 
+            start_pos.manhattanDistance(end_pos) * normalize_factor, 
+            null, 
+            0
+        );
+        try current.insert(start_node);
+
+        var lowest_cost: u32 = std.math.maxInt(u32);
+        var lowest_length: usize = std.math.maxInt(usize);
+        while (current.size() > 0) {
+            const node = current.pop();
+
+            const neighbor_directions: [3]Vec2 = .{
+                node.dir,
+                node.dir.right(),
+                node.dir.left(),
+            };
+            for (neighbor_directions) |dir| {
+                const neighbor = node.pos.add(dir);
+
+                if (self.isOffGrid(neighbor) or self.get(neighbor) == '#') {
+                    continue;
+                }
+                
+                var g_cost: u32 = if (dir.eq(node.dir)) 1 else 1001;
+                g_cost += node.g; 
+
+                const h_cost = neighbor.manhattanDistance(end_pos) * normalize_factor;
+
+                const cost = g_cost + h_cost;
+                std.debug.print("{}\n", .{cost});
+
+                const length = node.length + 1;
+
+                if (cost > lowest_cost or length > lowest_length) {
+                    continue;
+                }
+
+                const neighbor_node = try allocator.create(Node);
+                neighbor_node.* = Node.init(neighbor, dir, g_cost, cost, node, length); 
+
+                if (neighbor.eq(end_pos)) {
+                    lowest_cost = @min(lowest_cost, cost);
+                    lowest_length = @min(lowest_length, length);
+                    std.debug.print("found shortest\n", .{});
+                    try paths.append(neighbor_node);
+                } else {
+                    try current.insert(neighbor_node);
+                }
+            }
+        }
+
+        // filter paths
+        var filtered_paths = std.ArrayList(*Node).init(allocator);
+        for (paths.items) |end| {
+            if (end.cost <= lowest_cost and end.length <= lowest_length) {
+                try filtered_paths.append(end);
+            }
+        }
+
+        return filtered_paths;
     }
 };
 
 pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+
+    const grid = try Grid.parseInput(allocator, "input.txt");
+    defer grid.deinit();
+
+    var path_arena = std.heap.ArenaAllocator.init(allocator);
+    defer path_arena.deinit();
+
+    const shortest_paths = try grid.getShortestPaths(&path_arena);
+
+    var bestPathSpots = std.AutoHashMap(Vec2, void).init(allocator);
+    defer bestPathSpots.deinit();
+
+    for (shortest_paths.items) |end| {
+        std.debug.print("{}\n", .{end.length});
+        const path = try end.followPath(allocator);
+        defer path.deinit();
+
+        for (path.items) |pos| {
+            try bestPathSpots.put(pos, {});
+        }
+    }
+
+    std.debug.print("{}\n", .{bestPathSpots.count()});
 }
 
 fn testCompareUsize(a: usize, b: usize) bool {
@@ -190,4 +367,10 @@ test "Node Priority Queue" {
     try std.testing.expect(queue.pop().cost == 10);
     try std.testing.expect(queue.pop().cost == 20);
     try std.testing.expect(queue.pop().cost == 30);
+}
+
+test "Parsing Input" {
+    const allocator = std.testing.allocator;
+    const grid = try Grid.parseInput(allocator, "input.txt");
+    defer grid.deinit();
 }
