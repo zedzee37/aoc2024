@@ -137,21 +137,17 @@ fn PriorityQueue(comptime T: type, comptime compareFn: fn(a: T, b: T) bool) type
 const Node = struct {
     pos: Vec2,
     dir: Vec2,
-    g: u32,
     cost: u32,
-    prev: ?*const Node,
-    length: usize,
+    prev: ?*Node,
 
     const Self = @This();
 
-    fn init(pos: Vec2, dir: Vec2, g: u32, cost: u32, prev: ?*const Node, length: usize,) Self {
+    fn init(pos: Vec2, dir: Vec2, cost: u32, prev: ?*Node) Self {
         return .{
             .pos = pos,
             .dir = dir,
-            .g = g,
             .cost = cost,
             .prev = prev,
-            .length = length,
         };
     }
 
@@ -228,31 +224,33 @@ const Grid = struct {
 
     fn getShortestPaths(self: Self, arena: *std.heap.ArenaAllocator) !std.ArrayList(*Node) {
         const allocator = arena.allocator();
-        const normalize_factor = 100;
         var paths = std.ArrayList(*Node).init(allocator);
+
+        var visited = std.AutoHashMap(Vec2, *Node).init(allocator);
         
         const one_off = @as(i32, @intCast(self.size() - 2));
         const start_pos = Vec2.init(1, one_off);
         const end_pos = Vec2.init(one_off, 1);
 
-        var current = PriorityQueue(*const Node, Node.compareCost).init(allocator);
-        defer current.deinit();
+        var current = PriorityQueue(*Node, Node.compareCost).init(allocator);
         
         const start_node = try allocator.create(Node);
         start_node.* = Node.init(
             start_pos, 
             Vec2.init(1, 0), 
             0, 
-            start_pos.manhattanDistance(end_pos) * normalize_factor, 
             null, 
-            0
         );
         try current.insert(start_node);
 
-        var lowest_cost: u32 = std.math.maxInt(u32);
-        var lowest_length: usize = std.math.maxInt(usize);
         while (current.size() > 0) {
-            const node = current.pop();
+            var node = current.pop();
+
+            if (visited.contains(node.pos)) {
+                continue;
+            }
+
+            try visited.put(node.pos, node);
 
             const neighbor_directions: [3]Vec2 = .{
                 node.dir,
@@ -262,31 +260,17 @@ const Grid = struct {
             for (neighbor_directions) |dir| {
                 const neighbor = node.pos.add(dir);
 
-                if (self.isOffGrid(neighbor) or self.get(neighbor) == '#') {
+                if (self.isOffGrid(neighbor) or self.get(neighbor) == '#' or visited.contains(neighbor)) {
                     continue;
                 }
-                
-                var g_cost: u32 = if (dir.eq(node.dir)) 1 else 1001;
-                g_cost += node.g; 
 
-                const h_cost = neighbor.manhattanDistance(end_pos) * normalize_factor;
-
-                const cost = g_cost + h_cost;
-                std.debug.print("{}\n", .{cost});
-
-                const length = node.length + 1;
-
-                if (cost > lowest_cost or length > lowest_length) {
-                    continue;
-                }
+                var cost: u32 = if (dir.eq(node.dir)) 1 else 1001;
+                cost += node.cost;
 
                 const neighbor_node = try allocator.create(Node);
-                neighbor_node.* = Node.init(neighbor, dir, g_cost, cost, node, length); 
+                neighbor_node.* = Node.init(neighbor, dir, cost, node,); 
 
                 if (neighbor.eq(end_pos)) {
-                    lowest_cost = @min(lowest_cost, cost);
-                    lowest_length = @min(lowest_length, length);
-                    std.debug.print("found shortest\n", .{});
                     try paths.append(neighbor_node);
                 } else {
                     try current.insert(neighbor_node);
@@ -294,15 +278,7 @@ const Grid = struct {
             }
         }
 
-        // filter paths
-        var filtered_paths = std.ArrayList(*Node).init(allocator);
-        for (paths.items) |end| {
-            if (end.cost <= lowest_cost and end.length <= lowest_length) {
-                try filtered_paths.append(end);
-            }
-        }
-
-        return filtered_paths;
+        return paths;
     }
 };
 
@@ -322,7 +298,6 @@ pub fn main() !void {
     defer bestPathSpots.deinit();
 
     for (shortest_paths.items) |end| {
-        std.debug.print("{}\n", .{end.length});
         const path = try end.followPath(allocator);
         defer path.deinit();
 
