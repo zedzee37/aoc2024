@@ -55,6 +55,9 @@ class PriorityQueue:
         ret = self.heap.pop()
         self.check_heap_down(0)
         return ret
+    
+    def __len__(self):
+        return len(self.heap)
 
 
 def right(dir):
@@ -80,10 +83,51 @@ def get(grid, pos):
 
 
 class Node:
-    def __init__(self, c):
-        self.c = c
+    def __init__(self, pos, dir, previous):
+        self.pos = pos
+        self.dir = dir
+        self.previous = previous
+
+
+def get_shortest_paths(grid):
+    paths = set()
+    one_off = len(grid) - 2
+    start_pos = 1 + (1j * one_off)
+    end_pos = one_off + 1j
+
+    visited = {}
+    current = PriorityQueue(lambda n1, n2: n1[1] < n2[1])
+
+    current.insert((Node(start_pos, 1 + 0j, set()), 0))
+    end_path_cost = None
+    while len(current) > 0:
+        node, cost = current.pop()
+
+        if end_path_cost and cost > end_path_cost:
+            break
+        elif node.pos == end_pos:
+            end_path_cost = cost
+            paths = paths.union(node.previous)
+        elif (node.pos, node.dir) not in visited or visited[(node.pos, node.dir)] >= cost:
+            visited[(node.pos, node.dir)] = cost
+
+            next_pos = node.pos + node.dir
+            if not is_off_grid(grid, next_pos) and get(grid, next_pos) != '#':
+                previous = set(node.previous)
+                previous.add(node.pos)
+
+                new_node = Node(next_pos, node.dir, previous)
+                current.insert((new_node, cost + 1))
+
+            current.insert((Node(node.pos, right(node.dir), set(node.previous)), cost + 1000))
+            current.insert((Node(node.pos, left(node.dir), set(node.previous)), cost + 1000))
+
+    return len(paths) + 1
 
 
 with open("input.txt", 'r') as file:
     grid = file.read().split('\n')[:-1]
 
+
+path_count = get_shortest_paths(grid)
+print(path_count)
