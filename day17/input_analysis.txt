@@ -1,0 +1,22 @@
+Register A: 64854237
+Register B: 0
+Register C: 0
+
+Program: bst A, bxl 1, cdv B, bxl 5, bxc 0, out B, adv 3, jnz 0
+
+need to express everything in terms of A
+
+A = A / 8
+B = (((A % 8)^1)^5)^(A / 2**((A % 8)^1))
+C = A / 2**((A % 8)^1)
+output = B % 8
+
+target output:
+2,4,1,1,7,5,1,5,4,0,5,5,0,3,3,0
+
+A has to be at least:
+35184372090001
+
+Modulo 8 will take only the last 3 bits
+
+We need to look at the last 3 bits of A, find how to make it output the target output at the end, then look at the next 3 bits, and do the same thing

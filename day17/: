@@ -207,37 +207,28 @@ func simplifiedEmulate(startA int64) string {
 		c = int64(math.Floor(float64(a) / math.Pow(2, float64(b))))
 		b ^= 5
 		b ^= c
-		out += strconv.Itoa(int(b % 8))
+		out += strconv.Itoa(int(b % 8)) + ","
 		a /= 8
 	}
 
 	return out
 }
 
-func dfs(start int64, currentLen int, target string) int64 {
-	if currentLen < 0 {
-		return start
-	}
-
-	start <<= 3;
-	
-	for i := range 8 {
-		aValue := start + int64(i)
-		result := simplifiedEmulate(aValue)
-
-		if len(result) > 0 && target[currentLen] == result[0] {
-			if r := dfs(aValue, currentLen - 1, target); r > 0 {
-				return r
-			}
-		}
-	}
-
-	return 0
-}
-
 func main() {
-	targetStr := "2411751540550330"
-	targetLen := len(targetStr) - 1
-	fmt.Println(dfs(0, targetLen, targetStr))
+	targetStr := "2,4,1,1,7,5,1,5,4,0,5,5,0,3,3,0,"
+	targetLen := len(targetStr) / 2
+
+	num := 0
+	for i := range targetLen {
+		j := targetLen - i
+
+		lastNum := 0
+		for k := range 7 {
+			fmt.Println(simplifiedEmulate(int64(k) << j * 3))
+			lastNum = int64(k) << j * 3
+		}
+
+		nu
+	}
 }
 
