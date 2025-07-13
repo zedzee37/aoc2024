@@ -1,49 +1,115 @@
+#include <ctype.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <string.h>
+
+int to_1d(int x, int y) {
+	return x * 70 + y;
+}
 
 typedef struct {
-	uint64_t first_bits;
-	uint8_t last_bits;
-} GridRow;
+	bool is_wall;
+	int g_cost;
+	int h_cost;
+} AStarCell;
 
-bool grid_row_is_corrupted(GridRow *row, int x) {
-	x++;
-	if (x > 70) {
-		perror("x > 70 found");
-		exit(-1);
+typedef AStarCell * Grid;
+
+Grid create_grid() {
+	AStarCell *grid = malloc(sizeof(AStarCell) * 70 * 70);
+	if (!grid) {
+		perror("Coult not initialize the grid!");
+		return NULL;
 	}
-	if (x > 64) {
-		int x_diff = x - 64;
-		uint8_t target_bit = 1 << x_diff;
-		return row->last_bits & target_bit;
+	return grid;
+}
+
+void populate_grid(Grid grid, char *file_contents, int bytes) {
+	int file_pos = 0;
+	size_t file_size = strlen(file_contents);
+
+	int x = -1;
+	int y = -1;
+	int byte_count = 0;
+	while (byte_count < bytes) {
+		char ch = file_contents[file_pos];
+		file_pos++;
+
+		if (!isdigit(ch)) {
+			continue;
+		}
+		
+		char buf[3] = "00";
+		buf[2] = '\0';
+		
+		buf[0] = ch;
+		
+		ch = file_contents[file_pos];
+		if (isdigit(ch)) {
+			buf[1] = ch;
+		}
+
+		int value = atoi(buf);
+		
+		if (x == -1) {
+			x = value;
+		} else if (y == -1) {
+			y = value;
+			grid[to_1d(x, y)].is_wall = true;
+			byte_count++;
+			x = -1;
+			y = -1;
+		}
 	}
+}
+
+void print_grid(Grid grid) {
+	for (int y = 0; y < 70; y++) {
+		for (int x = 0; x < 70; y++) {
+			int idx = to_1d(x, y);
+			AStarCell *cell = &grid[idx];
+
+			if (cell->is_wall) {
+				printf("#");
+			} else {
+				printf(".");
+			}
+		}
+		printf("\n");
+	}
+}
+
+char *read_file(const char *file_path) {
+	FILE *fp = fopen(file_path, "r");
+	if (!fp) {
+		return NULL;
+	}
+
+	fseek(fp, SEEK_SET, SEEK_END);
+	size_t size = ftell(fp);
+	fseek(fp, SEEK_SET, SEEK_SET);
+
+	char *file_contents = malloc(sizeof(char) * size + 1);
 	
-	uint64_t target_bit = (uint64_t)1 << x;
-	return row->first_bits & target_bit;
-}
+	fread(file_contents, sizeof(char), size, fp);
+	file_contents[size] = '\0';
 
-void grid_row_set(GridRow *row, int x) {
-	x++;
-    if (x > 70 || x < 0) {
-        perror("grid_row_set: x out of bounds");
-        exit(-1);
-    }
+	fclose(fp);
 
-    if (x > 64) {
-        int x_diff = x - 64;
-        row->last_bits |= 1 << x_diff;
-    } else {
-        row->first_bits |= (uint64_t)1 << x;
-    }
-}
-
-GridRow *populate_grid(int steps) {
-	GridRow *rows = malloc(sizeof(GridRow) * 70);
+	return file_contents;
 }
 
 int main() {
-	GridRow *row = malloc(sizeof(GridRow));
+	char *file_contents = read_file("input.txt");
+	Grid grid = create_grid();
+
+	populate_grid(grid, file_contents, 1024);
+	print_grid(grid);
+
+	free(file_contents);
+	free(grid);
 	return 0;
 }
