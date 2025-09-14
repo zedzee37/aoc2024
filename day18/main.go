@@ -7,6 +7,19 @@ import (
 	"strings"
 )
 
+type BinaryNode[T any] struct {
+	value T
+	left  *BinaryNode[T]
+	right *BinaryNode[T]
+}
+
+type BinaryHeap[T comparable] struct {
+	head BinaryNode[T]
+
+	// returns if a should be above b
+	compareFunc func(a T, b T) bool
+}
+
 type AStarCell struct {
 	IsWall   bool
 	GCost    float64
@@ -29,15 +42,26 @@ func isOnGrid(idx int, gridSize int) bool {
 func neighbors(idx int, grid []AStarCell) []int {
 	neighbors := make([]int, 0)
 
-	// iterate through every direction
-	for y := -1; y < 1; y += 2 {
-		for x := -1; x < 1; x += 2 {
-			offset := to1D(x, y)
-			neighbor := idx + offset
+	directions := []int{
+		// left
+		to1D(-1, 0),
 
-			if isOnGrid(neighbor, len(grid)) {
-				neighbors = append(neighbors, neighbor)
-			}
+		// right
+		to1D(1, 0),
+
+		// up
+		to1D(0, -1),
+
+		// down
+		to1D(0, 1),
+	}
+
+	// iterate through every direction
+	for _, direction := range directions {
+		neighbor := idx + direction
+
+		if isOnGrid(neighbor, len(grid)) {
+			neighbors = append(neighbors, neighbor)
 		}
 	}
 
