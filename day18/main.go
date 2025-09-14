@@ -8,13 +8,55 @@ import (
 )
 
 type AStarCell struct {
-	IsWall bool
-	GCost float32
-	HCost float32
-} 
+	IsWall   bool
+	GCost    float64
+	HCost    float64
+	CameFrom *AStarCell
+}
+
+func (cell AStarCell) fCost() float64 {
+	return cell.GCost + cell.HCost
+}
 
 func to1D(x int, y int) int {
 	return (y * 71) + x
+}
+
+func isOnGrid(idx int, gridSize int) bool {
+	return idx >= 0 && idx < gridSize
+}
+
+func neighbors(idx int, grid []AStarCell) []int {
+	neighbors := make([]int, 0)
+
+	// iterate through every direction
+	for y := -1; y < 1; y += 2 {
+		for x := -1; x < 1; x += 2 {
+			offset := to1D(x, y)
+			neighbor := idx + offset
+
+			if isOnGrid(neighbor, len(grid)) {
+				neighbors = append(neighbors, neighbor)
+			}
+		}
+	}
+
+	return neighbors
+}
+
+func findPath(grid []AStarCell) *AStarCell {
+	target := len(grid) - 1
+	current := 0
+
+	for current != target {
+		neighbors := neighbors(current, grid)
+
+		if len(neighbors) == 0 {
+			continue
+		}
+	}
+
+	return &grid[target]
 }
 
 func parseInput(fileContents string) ([]AStarCell, error) {
@@ -28,7 +70,7 @@ func parseInput(fileContents string) ([]AStarCell, error) {
 			continue
 		}
 		nums := strings.Split(line, ",")
-		
+
 		x, err := strconv.Atoi(nums[0])
 		if err != nil {
 			return nil, err
@@ -49,8 +91,8 @@ func parseInput(fileContents string) ([]AStarCell, error) {
 func printGrid(grid []AStarCell) {
 	for y := range 71 {
 		for x := range 71 {
-			idx := to1D(x, y)	
-			
+			idx := to1D(x, y)
+
 			if grid[idx].IsWall {
 				fmt.Print("#")
 			} else {
@@ -72,6 +114,6 @@ func main() {
 		panic(err)
 	}
 
-	printGrid(grid)
+	path := findPath(grid)
+	fmt.Println(path.GCost)
 }
-
