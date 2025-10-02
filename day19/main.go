@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -15,18 +16,15 @@ func parseInput(fp string) ([]string, []string, error) {
 	availablePatterns := make([]string, 0)
 	start := 0
 	for i, ch := range fileContents {
-		switch ch {
-		case '\n':
-			availablePatterns = append(availablePatterns, fileContents[start:i-1])
+		if ch == '\n' {
+			availablePatterns = append(availablePatterns, fileContents[start:i])
 			start = i
 			break
-		case ' ':
+		} else if ch == ' ' {
+			start = i + 1
+		} else if ch == ',' {
 			availablePatterns = append(availablePatterns, fileContents[start:i-1])
 			start = i
-		case ',':
-			start = i
-		default:
-			continue
 		}
 	}
 
@@ -38,6 +36,9 @@ func parseInput(fp string) ([]string, []string, error) {
 			continue
 		}
 
+		if i-1 <= 0 {
+			continue
+		}
 		subStr := endSlice[start : i-1]
 
 		start = 0
@@ -52,5 +53,18 @@ func parseInput(fp string) ([]string, []string, error) {
 }
 
 func main() {
+	_, targetPatterns, err := parseInput("input.txt")
 
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// for _, pattern := range availablePatterns {
+	// 	fmt.Println(pattern)
+	// }
+
+	fmt.Println()
+	for _, pattern := range targetPatterns {
+		fmt.Print(pattern)
+	}
 }
