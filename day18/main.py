@@ -110,6 +110,9 @@ def find_path(grid):
 
             cells.append((neighbor_cell, (n_x, n_y)))
 
+    if (c_x, c_y) != (t_x, t_y):
+        return None
+
     return grid[c_x][c_y]
 
 
@@ -133,7 +136,24 @@ for i in range(1024):
 
     grid[x][y]["filled"] = True
 
-print_grid(grid)
-path = find_path(grid)
+i = 1024
 
-print(path["g_cost"])
+print_grid(grid)
+
+path = find_path(grid)
+while path is not None:
+    x, y = cells_dropped[i]
+
+    grid[x][y]["filled"] = True
+
+    print_grid(grid)
+
+    path = find_path(grid)
+
+    if path == None:
+        print(x, y)
+        break
+    else:
+        print(path["g_cost"])
+
+        i += 1
