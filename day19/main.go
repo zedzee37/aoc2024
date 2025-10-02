@@ -41,7 +41,7 @@ func parseInput(fp string) ([]string, []string, error) {
 		}
 		subStr := endSlice[start : i-1]
 
-		start = 0
+		start = i + 1
 		if len(subStr) <= 0 {
 			continue
 		}
@@ -65,6 +65,6 @@ func main() {
 
 	fmt.Println()
 	for _, pattern := range targetPatterns {
-		fmt.Print(pattern)
+		fmt.Println(pattern)
 	}
 }
