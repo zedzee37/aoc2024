@@ -5,6 +5,10 @@ import (
 	"os"
 )
 
+// func isPatternPossible(availablePatterns []string, pattern string) bool {
+
+// }
+
 func parseInput(fp string) ([]string, []string, error) {
 	dat, err := os.ReadFile(fp)
 	if err != nil {
