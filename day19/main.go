@@ -11,7 +11,8 @@ type LinkedListNode[T any] struct {
 }
 
 type PatternNode struct {
-	Leaves   LinkedListNode[string]
+	Previous *PatternNode
+	Exists   bool
 	Children map[byte]*PatternNode
 	Parent   *PatternNode
 }
@@ -20,53 +21,30 @@ func NewPatternNode() *PatternNode {
 	patternNode := new(PatternNode)
 
 	patternNode.Children = make(map[byte]*PatternNode, 0)
-	patternNode.Leaves = make([]string, 0)
+	patternNode.Exists = false
 	patternNode.Parent = nil
+	patternNode.Previous = nil
 
 	return patternNode
 }
 
 func (patternNode *PatternNode) InsertPattern(pattern string) {
-	patternNode.insertPattern(pattern, 0)
-}
-
-func (patternNode *PatternNode) insertPattern(pattern string, depth int) {
-	if len(patternNode.Leaves) == 0 && len(patternNode.Children) == 0 {
-		patternNode.Leaves = append(patternNode.Leaves, pattern)
+	if len(pattern) == 0 {
+		patternNode.Exists = true
 		return
 	}
 
-	if len(patternNode.Children) != 0 {
-		for key, node := range patternNode.Children {
-			if pattern[depth] == key {
-				node.insertPattern(pattern, depth+1)
-				return
-			}
+	for key, node := range patternNode.Children {
+		if pattern[0] == key {
+			node.InsertPattern(pattern[1:])
+			return
 		}
 	}
 
-	poppedLeaves := make([]string, 0)
-
-	for i := len(patternNode.Leaves) - 1; i >= 0; i-- {
-		leaf := patternNode.Leaves[i]
-		if len(leaf) > depth && leaf[depth] == pattern[depth] {
-			poppedLeaves = append(poppedLeaves, leaf)
-
-			startSlice := patternNode.Leaves[0:i]
-			endSlice := patternNode.Leaves[i+1]
-			patternNode.Leaves = append(startSlice, endSlice)
-		}
-	}
-
-	if len(poppedLeaves) > 0 {
-		newNode := NewPatternNode()
-		newNode.Leaves = append(newNode.Leaves, pattern)
-		newNode.Leaves = append(newNode.Leaves, poppedLeaves...)
-		patternNode.Children[pattern[depth]] = newNode
-		return
-	}
-
-	patternNode.Leaves = append(patternNode.Leaves, pattern)
+	newNode := NewPatternNode()
+	newNode.InsertPattern(pattern[1:])
+	newNode.Previous = patternNode
+	patternNode.Children[pattern[0]] = newNode
 }
 
 // func isPatternPossible(availablePatterns []string, pattern string) bool {
@@ -121,14 +99,15 @@ func parseInput(fp string) ([]string, []string, error) {
 }
 
 func printPatternNode(patternNode *PatternNode) {
-	println("Leaves: ")
-	for _, leaf := range patternNode.Leaves {
-		println(leaf)
-	}
-	println()
-
 	for key, child := range patternNode.Children {
 		fmt.Println("Printing leaf with key: {} --", string(key))
+
+		existsString := "false"
+		if child.Exists {
+			existsString = "true"
+		}
+
+		fmt.Println("Exists: {}", existsString)
 		println()
 		printPatternNode(child)
 	}
