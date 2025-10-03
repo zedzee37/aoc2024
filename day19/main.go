@@ -5,53 +5,41 @@ import (
 	"os"
 )
 
-type LinkedListNode[T any] struct {
-	value T
-	next  *LinkedListNode[T]
-}
-
-type PatternNode struct {
-	Previous *PatternNode
+type TrieNode struct {
 	Exists   bool
-	Children map[byte]*PatternNode
-	Parent   *PatternNode
+	children map[byte]*TrieNode
 }
 
-func NewPatternNode() *PatternNode {
-	patternNode := new(PatternNode)
-
-	patternNode.Children = make(map[byte]*PatternNode, 0)
-	patternNode.Exists = false
-	patternNode.Parent = nil
-	patternNode.Previous = nil
-
-	return patternNode
+func NewTrieNode() *TrieNode {
+	return &TrieNode{
+		Exists:   false,
+		children: make(map[byte]*TrieNode, 0),
+	}
 }
 
-func (patternNode *PatternNode) InsertPattern(pattern string) {
-	if len(pattern) == 0 {
-		patternNode.Exists = true
+func (node *TrieNode) Insert(str string) {
+	if len(str) == 0 {
+		node.Exists = true
 		return
 	}
 
-	for key, node := range patternNode.Children {
-		if pattern[0] == key {
-			node.InsertPattern(pattern[1:])
-			return
-		}
+	ch := str[0]
+	nextNode, ok := node.children[ch]
+	if ok {
+		nextNode.Insert(str[1:])
+		return
 	}
 
-	newNode := NewPatternNode()
-	newNode.InsertPattern(pattern[1:])
-	newNode.Previous = patternNode
-	patternNode.Children[pattern[0]] = newNode
+	newNode := NewTrieNode()
+	newNode.Insert(str[1:])
+	node.children[ch] = newNode
 }
 
 // func isPatternPossible(availablePatterns []string, pattern string) bool {
 
 // }
 
-func parseInput(fp string) (*PatternNode, []string, error) {
+func parseInput(fp string) (*TrieNode, []string, error) {
 	dat, err := os.ReadFile(fp)
 	if err != nil {
 		return nil, nil, err
@@ -59,17 +47,17 @@ func parseInput(fp string) (*PatternNode, []string, error) {
 
 	fileContents := string(dat)
 
-	patterns := NewPatternNode()
+	patterns := NewTrieNode()
 	start := 0
 	for i, ch := range fileContents {
 		if ch == '\n' {
-			patterns.InsertPattern(fileContents[start:i])
+			patterns.Insert(fileContents[start:i])
 			start = i
 			break
 		} else if ch == ' ' {
 			start = i + 1
 		} else if ch == ',' {
-			patterns.InsertPattern(fileContents[start : i-1])
+			patterns.Insert(fileContents[start : i-1])
 			start = i
 		}
 	}
@@ -98,8 +86,8 @@ func parseInput(fp string) (*PatternNode, []string, error) {
 	return patterns, targetPatterns, nil
 }
 
-func printPatternNode(patternNode *PatternNode, depth int) {
-	for key, child := range patternNode.Children {
+func printPatternNode(patternNode *TrieNode, depth int) {
+	for key, child := range patternNode.children {
 		padding := ""
 		for _ = range depth {
 			padding += "  >  "
@@ -118,11 +106,22 @@ func printPatternNode(patternNode *PatternNode, depth int) {
 }
 
 func main() {
-	patterns, _, err := parseInput("input.txt")
+	// patterns, _, err := parseInput("input.txt")
 
-	if err != nil {
-		panic(err.Error())
-	}
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 
-	printPatternNode(patterns, 0)
+	// printPatternNode(patterns, 0)
+
+	headNode := NewTrieNode()
+	headNode.Insert("gu")
+	headNode.Insert("gug")
+	headNode.Insert("gugg")
+	headNode.Insert("arg")
+	headNode.Insert("ar")
+	headNode.Insert("avg")
+	headNode.Insert("arvv")
+	headNode.Insert("b")
+	printPatternNode(headNode, 0)
 }
