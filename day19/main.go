@@ -51,7 +51,7 @@ func (patternNode *PatternNode) InsertPattern(pattern string) {
 
 // }
 
-func parseInput(fp string) ([]string, []string, error) {
+func parseInput(fp string) (*PatternNode, []string, error) {
 	dat, err := os.ReadFile(fp)
 	if err != nil {
 		return nil, nil, err
@@ -59,17 +59,17 @@ func parseInput(fp string) ([]string, []string, error) {
 
 	fileContents := string(dat)
 
-	availablePatterns := make([]string, 0)
+	patterns := NewPatternNode()
 	start := 0
 	for i, ch := range fileContents {
 		if ch == '\n' {
-			availablePatterns = append(availablePatterns, fileContents[start:i])
+			patterns.InsertPattern(fileContents[start:i])
 			start = i
 			break
 		} else if ch == ' ' {
 			start = i + 1
 		} else if ch == ',' {
-			availablePatterns = append(availablePatterns, fileContents[start:i-1])
+			patterns.InsertPattern(fileContents[start : i-1])
 			start = i
 		}
 	}
@@ -95,7 +95,7 @@ func parseInput(fp string) ([]string, []string, error) {
 		targetPatterns = append(targetPatterns, subStr)
 	}
 
-	return availablePatterns, targetPatterns, nil
+	return patterns, targetPatterns, nil
 }
 
 func printPatternNode(patternNode *PatternNode, depth int) {
@@ -118,21 +118,11 @@ func printPatternNode(patternNode *PatternNode, depth int) {
 }
 
 func main() {
-	// _, _, err := parseInput("input.txt")
+	patterns, _, err := parseInput("input.txt")
 
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
+	if err != nil {
+		panic(err.Error())
+	}
 
-	headNode := NewPatternNode()
-	headNode.InsertPattern("gug")
-	headNode.InsertPattern("gork")
-	headNode.InsertPattern("gork")
-	headNode.InsertPattern("gag")
-	headNode.InsertPattern("arg")
-	headNode.InsertPattern("arg")
-	headNode.InsertPattern("ar")
-	headNode.InsertPattern("av")
-
-	printPatternNode(headNode, 0)
+	printPatternNode(patterns, 0)
 }
