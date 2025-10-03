@@ -5,8 +5,13 @@ import (
 	"os"
 )
 
+type LinkedListNode[T any] struct {
+	value T
+	next  *LinkedListNode[T]
+}
+
 type PatternNode struct {
-	Leaves   []string
+	Leaves   LinkedListNode[string]
 	Children map[byte]*PatternNode
 	Parent   *PatternNode
 }
@@ -40,16 +45,25 @@ func (patternNode *PatternNode) insertPattern(pattern string, depth int) {
 		}
 	}
 
-	for i, leaf := range patternNode.Leaves {
-		if leaf[depth] == pattern[depth] {
-			patternNode.Leaves = append(patternNode.Leaves[0:i], patternNode.Leaves[i+1:len(patternNode.Leaves)]...)
+	poppedLeaves := make([]string, 0)
 
-			newNode := NewPatternNode()
-			newNode.Leaves = append(newNode.Leaves, leaf, pattern)
-			patternNode.Children[leaf[depth]] = newNode
+	for i := len(patternNode.Leaves) - 1; i >= 0; i-- {
+		leaf := patternNode.Leaves[i]
+		if len(leaf) > depth && leaf[depth] == pattern[depth] {
+			poppedLeaves = append(poppedLeaves, leaf)
 
-			return
+			startSlice := patternNode.Leaves[0:i]
+			endSlice := patternNode.Leaves[i+1]
+			patternNode.Leaves = append(startSlice, endSlice)
 		}
+	}
+
+	if len(poppedLeaves) > 0 {
+		newNode := NewPatternNode()
+		newNode.Leaves = append(newNode.Leaves, pattern)
+		newNode.Leaves = append(newNode.Leaves, poppedLeaves...)
+		patternNode.Children[pattern[depth]] = newNode
+		return
 	}
 
 	patternNode.Leaves = append(patternNode.Leaves, pattern)
@@ -133,6 +147,8 @@ func main() {
 	headNode.InsertPattern("gork")
 	headNode.InsertPattern("gag")
 	headNode.InsertPattern("arg")
+	headNode.InsertPattern("arg")
+	headNode.InsertPattern("ar")
 
 	printPatternNode(headNode)
 }
