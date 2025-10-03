@@ -98,18 +98,22 @@ func parseInput(fp string) ([]string, []string, error) {
 	return availablePatterns, targetPatterns, nil
 }
 
-func printPatternNode(patternNode *PatternNode) {
+func printPatternNode(patternNode *PatternNode, depth int) {
 	for key, child := range patternNode.Children {
-		fmt.Println("Printing leaf with key: {} --", string(key))
+		padding := ""
+		for _ = range depth {
+			padding += "  >  "
+		}
+
+		fmt.Printf("%s Printing leaf with key: %s --\n", padding, string(key))
 
 		existsString := "false"
 		if child.Exists {
 			existsString = "true"
 		}
 
-		fmt.Println("Exists: {}", existsString)
-		println()
-		printPatternNode(child)
+		fmt.Printf("%s Exists: %s\n\n", padding, existsString)
+		printPatternNode(child, depth+1)
 	}
 }
 
@@ -128,6 +132,7 @@ func main() {
 	headNode.InsertPattern("arg")
 	headNode.InsertPattern("arg")
 	headNode.InsertPattern("ar")
+	headNode.InsertPattern("av")
 
-	printPatternNode(headNode)
+	printPatternNode(headNode, 0)
 }
