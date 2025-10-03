@@ -25,19 +25,26 @@ func (node *TrieNode) Insert(str string) {
 
 	ch := str[0]
 	nextNode, ok := node.children[ch]
-	if ok {
-		nextNode.Insert(str[1:])
-		return
+	if !ok {
+		nextNode = NewTrieNode()
+		node.children[ch] = nextNode
 	}
-
-	newNode := NewTrieNode()
-	newNode.Insert(str[1:])
-	node.children[ch] = newNode
+	nextNode.Insert(str[1:])
 }
 
-// func isPatternPossible(availablePatterns []string, pattern string) bool {
+func isPatternPossible(availablePatterns *TrieNode, pattern string) bool {
+	if len(pattern) == 0 {
+		return true
+	}
 
-// }
+	node, exists := availablePatterns.children[pattern[0]]
+
+	if !exists {
+		return false
+	}
+
+	return isPatternPossible(node, pattern[1:])
+}
 
 func parseInput(fp string) (*TrieNode, []string, error) {
 	dat, err := os.ReadFile(fp)
@@ -52,13 +59,13 @@ func parseInput(fp string) (*TrieNode, []string, error) {
 	for i, ch := range fileContents {
 		if ch == '\n' {
 			patterns.Insert(fileContents[start:i])
-			start = i
+			start = i + 1
 			break
 		} else if ch == ' ' {
 			start = i + 1
 		} else if ch == ',' {
-			patterns.Insert(fileContents[start : i-1])
-			start = i
+			patterns.Insert(fileContents[start:i])
+			start = i + 1
 		}
 	}
 
@@ -70,10 +77,10 @@ func parseInput(fp string) (*TrieNode, []string, error) {
 			continue
 		}
 
-		if i-1 <= 0 {
+		if i <= 0 {
 			continue
 		}
-		subStr := endSlice[start : i-1]
+		subStr := endSlice[start:i]
 
 		start = i + 1
 		if len(subStr) <= 0 {
@@ -106,22 +113,18 @@ func printPatternNode(patternNode *TrieNode, depth int) {
 }
 
 func main() {
-	// patterns, _, err := parseInput("input.txt")
+	patterns, targetPatterns, err := parseInput("input.txt")
 
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
+	if err != nil {
+		panic(err.Error())
+	}
 
-	// printPatternNode(patterns, 0)
+	count := 0
+	for _, pattern := range targetPatterns {
+		if isPatternPossible(patterns, pattern) {
+			count++
+		}
+	}
 
-	headNode := NewTrieNode()
-	headNode.Insert("gu")
-	headNode.Insert("gug")
-	headNode.Insert("gugg")
-	headNode.Insert("arg")
-	headNode.Insert("ar")
-	headNode.Insert("avg")
-	headNode.Insert("arvv")
-	headNode.Insert("b")
-	printPatternNode(headNode, 0)
+	println(count)
 }
