@@ -33,17 +33,40 @@ func (node *TrieNode) Insert(str string) {
 }
 
 func isPatternPossible(availablePatterns *TrieNode, pattern string) bool {
+	visited := make(map[string]bool, 0)
+	return isPatternPossibleHelper(availablePatterns, pattern, visited)
+}
+
+func isPatternPossibleHelper(availablePatterns *TrieNode, pattern string, visited map[string]bool) bool {
 	if len(pattern) == 0 {
 		return true
 	}
 
-	node, exists := availablePatterns.children[pattern[0]]
-
-	if !exists {
+	_, exists := visited[pattern]
+	if exists {
 		return false
 	}
 
-	return isPatternPossible(node, pattern[1:])
+	visited[pattern] = true
+
+	node := availablePatterns
+	i := 0
+	for i < len(pattern) {
+		ch := pattern[i]
+
+		newNode, exists := node.children[ch]
+		if !exists {
+			return false
+		}
+
+		if newNode.Exists && isPatternPossibleHelper(availablePatterns, pattern[i+1:], visited) {
+			return true
+		}
+
+		node = newNode
+		i++
+	}
+	return false
 }
 
 func parseInput(fp string) (*TrieNode, []string, error) {
