@@ -32,41 +32,43 @@ func (node *TrieNode) Insert(str string) {
 	nextNode.Insert(str[1:])
 }
 
-func isPatternPossible(availablePatterns *TrieNode, pattern string) bool {
-	visited := make(map[string]bool, 0)
+func isPatternPossible(availablePatterns *TrieNode, pattern string) int {
+	visited := make(map[string]int, 0)
 	return isPatternPossibleHelper(availablePatterns, pattern, visited)
 }
 
-func isPatternPossibleHelper(availablePatterns *TrieNode, pattern string, visited map[string]bool) bool {
+func isPatternPossibleHelper(availablePatterns *TrieNode, pattern string, visited map[string]int) int {
 	if len(pattern) == 0 {
-		return true
+		return 1
 	}
 
 	_, exists := visited[pattern]
 	if exists {
-		return false
+		return visited[pattern]
 	}
-
-	visited[pattern] = true
 
 	node := availablePatterns
 	i := 0
+
+	sum := 0
 	for i < len(pattern) {
 		ch := pattern[i]
 
 		newNode, exists := node.children[ch]
 		if !exists {
-			return false
+			break
 		}
 
-		if newNode.Exists && isPatternPossibleHelper(availablePatterns, pattern[i+1:], visited) {
-			return true
+		if newNode.Exists {
+			sum += isPatternPossibleHelper(availablePatterns, pattern[i+1:], visited)
 		}
 
 		node = newNode
 		i++
 	}
-	return false
+
+	visited[pattern] = sum
+	return sum
 }
 
 func parseInput(fp string) (*TrieNode, []string, error) {
@@ -144,9 +146,7 @@ func main() {
 
 	count := 0
 	for _, pattern := range targetPatterns {
-		if isPatternPossible(patterns, pattern) {
-			count++
-		}
+		count += isPatternPossible(patterns, pattern)
 	}
 
 	println(count)
