@@ -97,6 +97,7 @@ func tracePath(grid Grid, mapInfo *MapInfo) map[Vec2]bool {
 
 	currentCost := 0
 	for currentPos != mapInfo.start {
+		p := Vec2{}
 		for _, direction := range directions {
 			newPos := currentPos.Add(direction)
 
@@ -108,20 +109,20 @@ func tracePath(grid Grid, mapInfo *MapInfo) map[Vec2]bool {
 			cell, exists := grid[newPos]
 			if exists {
 				visited[currentPos] = true
-				currentPos = newPos
+				p = newPos
 				currentCost++
 				cell.DistanceToEnd = currentCost
-				break
 			} else {
 				wallPositions[newPos] = true
 			}
 		}
+		currentPos = p
 	}
 
 	return wallPositions
 }
 
-func printGrid(grid Grid, mapInfo *MapInfo) {
+func printGrid(grid Grid, mapInfo *MapInfo, walls map[Vec2]bool) {
 	const Padding = 3
 
 	for y := 0; y < mapInfo.max.y; y++ {
@@ -129,11 +130,12 @@ func printGrid(grid Grid, mapInfo *MapInfo) {
 			pos := Vec2{x: x, y: y}
 
 			cell, exists := grid[pos]
+			_, wallExists := walls[pos]
 			if exists {
-				// Pad the GCost to width Padding
 				fmt.Printf("%*d", Padding, cell.DistanceToEnd)
+			} else if wallExists {
+				fmt.Printf("%*s", Padding, "@")
 			} else {
-				// Print placeholder for missing cell
 				fmt.Printf("%*s", Padding, "#")
 			}
 		}
@@ -147,5 +149,5 @@ func main() {
 		panic(err.Error())
 	}
 	walls := tracePath(grid, mapInfo)
-	printGrid(grid, mapInfo)
+	printGrid(grid, mapInfo, walls)
 }
