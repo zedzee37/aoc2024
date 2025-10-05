@@ -21,8 +21,8 @@ func (v1 Vec2) Add(v2 Vec2) Vec2 {
 }
 
 type PathNode struct {
-	GCost int
-	next  *PathNode
+	DistanceToEnd int
+	next          *PathNode
 }
 
 type MapInfo struct {
@@ -34,8 +34,8 @@ type MapInfo struct {
 
 func NewPathNode(GCost int) *PathNode {
 	return &PathNode{
-		GCost: 0,
-		next:  nil,
+		DistanceToEnd: 0,
+		next:          nil,
 	}
 }
 
@@ -89,13 +89,14 @@ var directions [4]Vec2 = [4]Vec2{
 	Vec2{x: 0, y: -1},
 }
 
-func tracePath(grid Grid, mapInfo *MapInfo) {
-	currentPos := mapInfo.start
+func tracePath(grid Grid, mapInfo *MapInfo) map[Vec2]bool {
+	currentPos := mapInfo.end
 
+	wallPositions := make(map[Vec2]bool, 0)
 	visited := make(map[Vec2]bool, 0)
 
 	currentCost := 0
-	for currentPos != mapInfo.end {
+	for currentPos != mapInfo.start {
 		for _, direction := range directions {
 			newPos := currentPos.Add(direction)
 
@@ -109,11 +110,15 @@ func tracePath(grid Grid, mapInfo *MapInfo) {
 				visited[currentPos] = true
 				currentPos = newPos
 				currentCost++
-				cell.GCost = currentCost
+				cell.DistanceToEnd = currentCost
 				break
+			} else {
+				wallPositions[newPos] = true
 			}
 		}
 	}
+
+	return wallPositions
 }
 
 func printGrid(grid Grid, mapInfo *MapInfo) {
@@ -126,7 +131,7 @@ func printGrid(grid Grid, mapInfo *MapInfo) {
 			cell, exists := grid[pos]
 			if exists {
 				// Pad the GCost to width Padding
-				fmt.Printf("%*d", Padding, cell.GCost)
+				fmt.Printf("%*d", Padding, cell.DistanceToEnd)
 			} else {
 				// Print placeholder for missing cell
 				fmt.Printf("%*s", Padding, "#")
@@ -141,6 +146,6 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	tracePath(grid, mapInfo)
+	walls := tracePath(grid, mapInfo)
 	printGrid(grid, mapInfo)
 }
