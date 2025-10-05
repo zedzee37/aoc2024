@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -10,6 +11,13 @@ type Grid map[Vec2]*PathNode
 type Vec2 struct {
 	x int
 	y int
+}
+
+func (v1 Vec2) Add(v2 Vec2) Vec2 {
+	return Vec2{
+		x: v1.x + v2.x,
+		y: v1.y + v2.y,
+	}
 }
 
 type PathNode struct {
@@ -31,14 +39,14 @@ func NewPathNode(GCost int) *PathNode {
 	}
 }
 
-func isInBounds(pos Vec2, mapInfo MapInfo) bool {
+func isInBounds(pos Vec2, mapInfo *MapInfo) bool {
 	return pos.x >= mapInfo.min.x && pos.y >= mapInfo.min.y && pos.x <= mapInfo.max.x && pos.y <= mapInfo.max.y
 }
 
-func parseInput(fp string) (Grid, MapInfo, error) {
+func parseInput(fp string) (Grid, *MapInfo, error) {
 	fileContents, err := os.ReadFile(fp)
 	if err != nil {
-		return nil, MapInfo{}, err
+		return nil, &MapInfo{}, err
 	}
 
 	lines := strings.Split(string(fileContents), "\n")
@@ -71,22 +79,60 @@ func parseInput(fp string) (Grid, MapInfo, error) {
 
 	mapInfo.max.x += 2
 
-	return grid, mapInfo, nil
+	return grid, &mapInfo, nil
 }
 
-func printGrid(grid Grid, mapInfo MapInfo) {
-	for y := range mapInfo.max.y {
-		for x := range mapInfo.max.x {
-			pos := Vec2{x: x, y: y}
+var directions [4]Vec2 = [4]Vec2{
+	Vec2{x: 1, y: 0},
+	Vec2{x: -1, y: 0},
+	Vec2{x: 0, y: 1},
+	Vec2{x: 0, y: -1},
+}
 
-			_, exists := grid[pos]
+func tracePath(grid Grid, mapInfo *MapInfo) {
+	currentPos := mapInfo.start
+
+	visited := make(map[Vec2]bool, 0)
+
+	currentCost := 0
+	for currentPos != mapInfo.end {
+		for _, direction := range directions {
+			newPos := currentPos.Add(direction)
+
+			_, hasVisited := visited[newPos]
+			if hasVisited {
+				continue
+			}
+
+			cell, exists := grid[newPos]
 			if exists {
-				print(".")
-			} else {
-				print("#")
+				visited[currentPos] = true
+				currentPos = newPos
+				currentCost++
+				cell.GCost = currentCost
+				break
 			}
 		}
-		println()
+	}
+}
+
+func printGrid(grid Grid, mapInfo *MapInfo) {
+	const Padding = 3
+
+	for y := 0; y < mapInfo.max.y; y++ {
+		for x := 0; x < mapInfo.max.x; x++ {
+			pos := Vec2{x: x, y: y}
+
+			cell, exists := grid[pos]
+			if exists {
+				// Pad the GCost to width Padding
+				fmt.Printf("%*d", Padding, cell.GCost)
+			} else {
+				// Print placeholder for missing cell
+				fmt.Printf("%*s", Padding, "#")
+			}
+		}
+		fmt.Println()
 	}
 }
 
@@ -95,5 +141,6 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+	tracePath(grid, mapInfo)
 	printGrid(grid, mapInfo)
 }
