@@ -89,10 +89,9 @@ var directions [4]Vec2 = [4]Vec2{
 	Vec2{x: 0, y: -1},
 }
 
-func tracePath(grid Grid, mapInfo *MapInfo) map[Vec2]bool {
+func tracePath(grid Grid, mapInfo *MapInfo) {
 	currentPos := mapInfo.end
 
-	wallPositions := make(map[Vec2]bool, 0)
 	visited := make(map[Vec2]bool, 0)
 
 	currentCost := 0
@@ -112,14 +111,59 @@ func tracePath(grid Grid, mapInfo *MapInfo) map[Vec2]bool {
 				p = newPos
 				currentCost++
 				cell.DistanceToEnd = currentCost
-			} else {
-				wallPositions[newPos] = true
+				break
 			}
 		}
 		currentPos = p
 	}
+}
 
-	return wallPositions
+func savingCheats(grid Grid, mapInfo *MapInfo, pos Vec2) int {
+	currentCell, currentExists := grid[pos]
+	if !currentExists {
+		return 0
+	}
+
+	distance := currentCell.DistanceToEnd
+	count := 0
+
+	for _, direction := range directions {
+		newPos := pos.Add(direction)
+
+		_, exists := grid[newPos]
+		if exists {
+			continue
+		}
+
+		surroundingCheats := surroundingCells(grid, newPos)
+		for _, surrounding := range surroundingCheats {
+			savedTime := (surrounding.DistanceToEnd - distance) - 2
+
+			println(savedTime)
+			if savedTime >= 100 {
+				count++
+			}
+		}
+	}
+
+	return count
+}
+
+func surroundingCells(grid Grid, pos Vec2) []*PathNode {
+	surrounding := make([]*PathNode, 0)
+
+	for _, direction := range directions {
+		newPos := pos.Add(direction)
+		cell, exists := grid[newPos]
+
+		if !exists {
+			continue
+		}
+
+		surrounding = append(surrounding, cell)
+	}
+
+	return surrounding
 }
 
 func printGrid(grid Grid, mapInfo *MapInfo, walls map[Vec2]bool) {
@@ -143,11 +187,20 @@ func printGrid(grid Grid, mapInfo *MapInfo, walls map[Vec2]bool) {
 	}
 }
 
+// TODO: add a visited check to see if a wall has been visited
+// check all cheats, not just the best ones for a wall
 func main() {
-	grid, mapInfo, err := parseInput("input.txt")
+	grid, mapInfo, err := parseInput("actual_input.txt")
 	if err != nil {
 		panic(err.Error())
 	}
-	walls := tracePath(grid, mapInfo)
-	printGrid(grid, mapInfo, walls)
+	tracePath(grid, mapInfo)
+
+	// visited := make(map[Vec2]bool, 0)
+	count := 0
+	for cell := range grid {
+		cheats := savingCheats(grid, mapInfo, cell)
+		count += cheats
+	}
+	println(count)
 }
