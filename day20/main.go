@@ -139,7 +139,6 @@ func savingCheats(grid Grid, mapInfo *MapInfo, pos Vec2) int {
 		for _, surrounding := range surroundingCheats {
 			savedTime := (surrounding.DistanceToEnd - distance) - 2
 
-			println(savedTime)
 			if savedTime >= 100 {
 				count++
 			}
