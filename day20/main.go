@@ -186,8 +186,6 @@ func printGrid(grid Grid, mapInfo *MapInfo, walls map[Vec2]bool) {
 	}
 }
 
-// TODO: add a visited check to see if a wall has been visited
-// check all cheats, not just the best ones for a wall
 func main() {
 	grid, mapInfo, err := parseInput("actual_input.txt")
 	if err != nil {
