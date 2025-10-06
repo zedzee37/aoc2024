@@ -118,7 +118,7 @@ func tracePath(grid Grid, mapInfo *MapInfo) {
 	}
 }
 
-func savingCheats(grid Grid, mapInfo *MapInfo, pos Vec2) int {
+func savingCheats(grid Grid, pos Vec2) int {
 	currentCell, currentExists := grid[pos]
 	if !currentExists {
 		return 0
@@ -196,7 +196,7 @@ func main() {
 	// visited := make(map[Vec2]bool, 0)
 	count := 0
 	for cell := range grid {
-		cheats := savingCheats(grid, mapInfo, cell)
+		cheats := savingCheats(grid, cell)
 		count += cheats
 	}
 	println(count)
