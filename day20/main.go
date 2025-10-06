@@ -186,6 +186,7 @@ func printGrid(grid Grid, mapInfo *MapInfo, walls map[Vec2]bool) {
 	}
 }
 
+// check every cell within the manhattan distance of 20 and that will save more than 100 picoseconds
 func main() {
 	grid, mapInfo, err := parseInput("actual_input.txt")
 	if err != nil {
