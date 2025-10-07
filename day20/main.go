@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 )
@@ -18,6 +19,10 @@ func (v1 Vec2) Add(v2 Vec2) Vec2 {
 		x: v1.x + v2.x,
 		y: v1.y + v2.y,
 	}
+}
+
+func (v1 Vec2) ManhattanDistance(v2 Vec2) int {
+	return int(math.Abs(float64(v1.x-v2.x)) + math.Abs(float64(v1.y-v2.y)))
 }
 
 type PathNode struct {
@@ -186,6 +191,50 @@ func printGrid(grid Grid, mapInfo *MapInfo, walls map[Vec2]bool) {
 	}
 }
 
+func partOne(grid Grid) int {
+	count := 0
+
+	for cell := range grid {
+		cheats := savingCheats(grid, cell)
+		count += cheats
+	}
+
+	return count
+}
+
+func cellsWithinRange(grid Grid, pos Vec2) int {
+	count := 0
+	currentCell := grid[pos]
+	for nextPos, cell := range grid {
+		possibleDistance := cell.DistanceToEnd - currentCell.DistanceToEnd
+
+		if possibleDistance < 100 {
+			continue
+		}
+
+		manhattanDistance := nextPos.ManhattanDistance(pos)
+		if manhattanDistance > 20 {
+			continue
+		}
+
+		saved := possibleDistance - manhattanDistance
+		if saved >= 100 {
+			count++
+		}
+	}
+	return count
+}
+
+func partTwo(grid Grid) int {
+	count := 0
+
+	for cell := range grid {
+		count += cellsWithinRange(grid, cell)
+	}
+
+	return count
+}
+
 func main() {
 	grid, mapInfo, err := parseInput("actual_input.txt")
 	if err != nil {
@@ -193,11 +242,8 @@ func main() {
 	}
 	tracePath(grid, mapInfo)
 
-	// visited := make(map[Vec2]bool, 0)
-	count := 0
-	for cell := range grid {
-		cheats := savingCheats(grid, cell)
-		count += cheats
-	}
-	println(count)
+	partOneResult := partOne(grid)
+	partTwoResult := partTwo(grid)
+	println(partOneResult)
+	println(partTwoResult)
 }
