@@ -191,7 +191,6 @@ func printGrid(grid Grid, mapInfo *MapInfo, walls map[Vec2]bool) {
 	}
 }
 
-<<<<<<< HEAD
 func partOne(grid Grid) int {
 	count := 0
 
